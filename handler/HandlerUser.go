@@ -1,7 +1,6 @@
 package handler
 
 import(
-	// "ProjectDatabase/entity"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"fmt"
@@ -19,16 +18,15 @@ type handlerUser struct{
 	db *sql.DB
 }
 
-func NewHandler(db *sql.DB) *handlerUser{
+func NewHandlerUser(db *sql.DB) *handlerUser{
 	return &handlerUser{db}
 }
 
 func (h *handlerUser) GetUserByUsername(username string) entity.Users{
 	var user entity.Users
 
-	row := h.db.QueryRow("SELECT role, password FROM users WHERE username = ?", username)
-
-	row.Scan(&user.Role, &user.Password)
+	row := h.db.QueryRow("SELECT id, role, password, toko_id FROM users WHERE username = ?", username)
+	row.Scan(&user.ID, &user.Role, &user.Password, &user.TokoID)
 
 	return user
 }

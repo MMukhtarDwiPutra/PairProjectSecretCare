@@ -11,8 +11,9 @@ func main(){
 	db := config.InitDatabase("root:@tcp(127.0.0.1:3306)/SecretCare2")
 	defer db.Close()
 	
-	handler := handler.NewHandler(db)
-	cli := cli.NewCli(handler)
+	handlerUser := handler.NewHandlerUser(db)
+	handlerProduct := handler.NewHandlerProduct(db)
+	cli := cli.NewCli(handlerUser, handlerProduct)
 
 	cli.MenuUtama()
 }

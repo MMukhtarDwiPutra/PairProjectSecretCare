@@ -16,10 +16,10 @@ Task Putra{
 	1. fmt.Println("1. Order Report") // Intermediate sql
 
 	Tables: product
-	1. fmt.Println("2. Product Report") // Intermediate sql
-	2. fmt.Println("3. Create New Produk untuk dijual") // easy golang
-	3. fmt.Println("4. Update stock barang") // intermediate golang
-	4. fmt.Println("5. Delete barang") // easy sql
+	1. fmt.Println("2. Product Report") // Hard sql
+	2. fmt.Println("3. Create New Produk untuk dijual") // easy golang (done)
+	3. fmt.Println("4. Update stock barang") // intermediate golang (done)
+	4. fmt.Println("5. Delete barang") // easy sql (done)
 }
 
 Task Bang Obie{
