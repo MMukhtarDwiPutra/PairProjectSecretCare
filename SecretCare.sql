@@ -66,3 +66,16 @@ INSERT INTO products(id, nama, harga, stock, toko_id) VALUES
 (3, "Toner Skintific Vit C", 60000, 12, 2),
 (4, "Pelembab Wardah AHA/BHA", 50000, 34, 3),
 (5, "Serum Wardah AHA/BHA", 50000, 39, 3);
+
+INSERT INTO `carts` (`id`, `status`, `user_id`) VALUES
+(1, 'Checked Out', 3),
+(2, 'Active', 3);
+
+INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `qty`, `price_at_purchase`) VALUES
+(1, 1, 1, 10, 100000),
+(2, 1, 2, 29, 290000),
+(3, 2, 5, 21, 210000);
+
+INSERT INTO `orders` (`id`, `status`, `order_date`, `cart_id`) VALUES
+(1, 'Sudah Dikirim', '2024-11-05', 1),
+(2, 'Belum dikirim', '2024-11-05', 2);
