@@ -6,5 +6,5 @@ type Users struct{
 	Password string
 	FullName string
 	TokoID int
-	RoleID int
+	Role string
 }
