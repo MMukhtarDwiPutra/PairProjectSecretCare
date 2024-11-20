@@ -33,11 +33,11 @@ CREATE TABLE carts(
 
 CREATE TABLE cart_items(
 	id INT PRIMARY KEY AUTO_INCREMENT,
-	user_id INT,
+	cart_id INT,
 	product_id INT,
 	qty INT NOT NULL,
 	price_at_purchase FLOAT NOT NULL,
-	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (cart_id) REFERENCES carts(id),
 	FOREIGN KEY (product_id) REFERENCES products(id)
 );
 

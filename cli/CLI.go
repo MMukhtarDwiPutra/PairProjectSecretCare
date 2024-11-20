@@ -9,7 +9,10 @@ import(
 	"SecretCare/handler"
 	"SecretCare/entity"
 	"strings"
+	"strconv"
 )
+
+var tokoID, userID int
 
 type CLI interface{
 	Login(inputReader *bufio.Reader) (bool, string)
@@ -19,13 +22,14 @@ type CLI interface{
 
 type cli struct{
 	handlerUser handler.HandlerUser
+	handlerProduct handler.HandlerProduct
 }
 
-func NewCli(handlerUser handler.HandlerUser) *cli{
-	return &cli{handlerUser}
+func NewCli(handlerUser handler.HandlerUser, handlerProduct handler.HandlerProduct) *cli{
+	return &cli{handlerUser, handlerProduct}
 }
 
-func (c *cli) Login(inputReader *bufio.Reader) (bool, string){
+func (c *cli) Login(inputReader *bufio.Reader) (bool, entity.Users){
 	var username, password string
 
 	fmt.Print("Masukan username: ")
@@ -40,7 +44,7 @@ func (c *cli) Login(inputReader *bufio.Reader) (bool, string){
 	successLogin := helpers.CheckPasswordHash(password, user.Password)
 
 	fmt.Println("")
-	return successLogin, user.Role
+	return successLogin, user
 }
 
 func (c *cli) Register(inputReader *bufio.Reader){
@@ -116,6 +120,95 @@ func (c *cli) Register(inputReader *bufio.Reader){
 	fmt.Println("")
 }
 
+func (c *cli) MenuProductReport(){
+	fmt.Println("")
+	fmt.Println("==========================================================")
+	fmt.Println("=====================Report Product=======================")
+	fmt.Println("==========================================================")
+	fmt.Printf("%-25s %-10s %s\n", "Nama Produk", "Penjualan", "Pendapatan") // Header with fixed column widths
+
+	productReports := c.handlerProduct.GetProductReport(tokoID)
+	for _, productReport := range productReports{
+		fmt.Printf("%-25s %-10v Rp. %.2f\n", productReport.Nama, productReport.TotalPenjualan, productReport.TotalPendapatan) // Header with fixed column widths
+	}
+}
+
+func (c *cli) MenuUpdateStock(){
+	products := c.handlerProduct.GetProductsByTokoID(tokoID)
+
+	fmt.Println("")
+	fmt.Println("=============================")
+	fmt.Println("Update Stock dari Produk")
+	fmt.Println("=============================")
+	fmt.Printf("%-5s %-25s %s\n", "ID", "Nama Produk", "Stock") // Header with fixed column widths
+
+	for _, product := range products {
+		// Print each product with aligned columns
+		fmt.Printf("%-5d %-25s %d\n", product.ID, product.Nama, product.Stock)
+	}
+
+	fmt.Println("0. Untuk kembali")
+	produkID := helpers.InputAndHandlingNumber("Masukan ID product yang ingin diupdate: ")
+	if produkID == 0 {
+		return
+	}
+
+	stock := helpers.InputAndHandlingNumber("Masukan jumlah stock terbaru: ")
+
+	c.handlerProduct.UpdateStockById(produkID, stock)
+}
+
+func (c *cli) MenuDeleteProduct(){
+	products := c.handlerProduct.GetProductsByTokoID(tokoID)
+	fmt.Println("")
+	fmt.Println("=============================")
+	fmt.Println("Delete Produk dari Toko")
+	fmt.Println("=============================")
+	fmt.Println("ID\t Nama Produk")
+
+	for _, product := range products{
+		fmt.Printf("%v\t %v\n",product.ID, product.Nama)
+	}
+	fmt.Println("0. Untuk kembali")
+	produkID := helpers.InputAndHandlingNumber("Masukan ID product yang ingin dihapus: ")
+	if(produkID == 0){
+		return
+	}
+
+	c.handlerProduct.DeleteProductById(produkID)
+	fmt.Println("Berhasil dihapus!")
+}
+
+func (c *cli) MenuCreateNewProduct(){
+	var product entity.Product
+
+	inputReader := bufio.NewReader(os.Stdin) //Buat reader agar bisa scan (input oleh user) nanti
+
+	fmt.Println("")
+	fmt.Println("=============================")
+	fmt.Println("Tambah Product Baru di Toko")
+	fmt.Println("=============================")
+	// Input Username
+	fmt.Print("Masukan nama produk: ")
+	product.Nama, _ = inputReader.ReadString('\n')
+	product.Nama = strings.TrimSpace(product.Nama)	
+
+	// Input Username
+	fmt.Print("Masukan harga: ")
+	hargaString, _ := inputReader.ReadString('\n')
+	hargaString = strings.TrimSpace(hargaString)
+	product.Harga, _ = strconv.ParseFloat(hargaString, 64);
+
+	// Input Username
+	fmt.Print("Masukan stock: ")
+	stockString, _ := inputReader.ReadString('\n')
+	stockString = strings.TrimSpace(stockString)
+	product.Stock, _ = strconv.Atoi(stockString);
+
+	product.TokoID = tokoID
+	c.handlerProduct.CreateNewProduct(product);
+}
+
 func (c *cli) MenuPenjual(){
 	var selesaiMenu bool = false
 
@@ -133,9 +226,13 @@ func (c *cli) MenuPenjual(){
 		switch inputMenu{
 			case 1:
 			case 2:
+				c.MenuProductReport()
 			case 3:
+				c.MenuCreateNewProduct()
 			case 4:
+				c.MenuUpdateStock()
 			case 5:
+				c.MenuDeleteProduct()
 			case 6:
 				c.MenuAkun()
 			case 7:
@@ -212,13 +309,15 @@ func (c *cli) MenuUtama(){
 		switch inputMenu{
 			// Login
 			case 1:
-				successLogin, role := c.Login(inputReader);
+				successLogin, user := c.Login(inputReader);
 
 				if(successLogin){
 					fmt.Println("Berhasil login!")
+					user.ID = user.ID
 
-					switch role{
+					switch user.Role{
 						case "Penjual":
+							tokoID = user.TokoID
 							c.MenuPenjual();
 						case "Pembeli":
 							c.MenuPembeli();
