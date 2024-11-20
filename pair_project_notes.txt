@@ -1,0 +1,82 @@
+func AddCart:
+case belum ada cart active
+1. CreateNewCart
+2. CreateNewCartItems
+
+case sudah ada cart active
+1. CreateNewCartItems
+
+
+func CheckOut:
+1. Update Status Cart.
+2. CreateOrderCart referensi ke cart_id yang active tadi.
+
+Task Putra{
+	Tables: order
+	1. fmt.Println("1. Order Report") // Intermediate sql
+
+	Tables: product
+	1. fmt.Println("2. Product Report") // Intermediate sql
+	2. fmt.Println("3. Create New Produk untuk dijual") // easy golang
+	3. fmt.Println("4. Update stock barang") // intermediate golang
+	4. fmt.Println("5. Delete barang") // easy sql
+}
+
+Task Bang Obie{
+	Tables cart: 
+	1. fmt.Println("1. Add Cart") // Intermediate sql golang
+	2. fmt.Println("2. Show Cart") // Easy sql
+	3. fmt.Println("3. Checkout") // Hard beban kerja, sql golang
+	4. fmt.Println("4. Delete Cart") // easy sql
+	5. fmt.Println("5. Update Cart") // intermediate sql golang
+}
+
+Task Bang Fathur{
+	Table user: 
+	1. fmt.Println("1. Delete Akun") // easy sql
+	2. fmt.Println("2. Ubah Data Akun") // intermediate golang
+
+	Ada di menu penjual:
+	3. report user dengan pembelian terbanyak/pengeluaran terbanyak berdasarkan harga // intermediate sql golang
+
+	Ada di menu pembeli
+	4. report user yang isinya pengeluaran dan qty barang yang sudah dibeli // intermediate (sql golang)
+}
+
+
+Permasalahan:
+1. Bagian user, role jadi pembeli (user)
+2. Bagian products saat checkout, jika barang products habis lalu dimasukan ke cart, lalu diorder dan dibayar, bagaimana?
+   Solusi: check apakah barang masih tersedia atau tidak
+3. Ada 2 pembeli, yang masukin 1 barang yang sama
+			Table User:
+			id 	username	password	full_name	toko_id		role
+			1 	mmukhtar	mmukhtar	mmukhtar	1 			Pembeli
+			2 	fathur		fathur		fathur		1 			Pembeli
+
+			Table Barang:
+			1	Pelembab	10000	10	1
+
+			Pembeli masukin ke cart:
+			CreateNewCart
+			1 	"Active"	1
+
+
+			CreateNewCartItems
+			cart_id	product_id	qty		price_at_purchase
+			1 		1 			6		60000
+			3		1 			4		40000
+
+			ini belum checkout
+
+			Kita cek dulu si barangnya masih ada atau tidak saat dimasukan ke cart_items?
+			Solusi: Kalau misalnya si pembeli kedua (fathur), dia mau checkout, dikasih peringatan, kalau barang yang ada di cart, kurang stocknya.
+
+			Delete: ada dua pilihan
+			Delete by ID cart_items, Delete All Cart_items (carts dia di delete)
+
+			Delete cart_items
+
+4. Checkout:
+Table: orders
+id 	status	order_date	cart_id

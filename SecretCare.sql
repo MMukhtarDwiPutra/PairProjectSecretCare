@@ -21,8 +21,7 @@ CREATE TABLE users(
 	password VARCHAR(64) NOT NULL,
 	full_name VARCHAR(128) NOT NULL,
 	toko_id INT DEFAULT 1,
-	priority ENUM('Penjual', 'Pembeli'),
-	FOREIGN KEY (role_id) REFERENCES user_roles(id)
+	priority ENUM('Penjual', 'Pembeli')
 );
 
 CREATE TABLE carts(
