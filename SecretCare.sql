@@ -50,13 +50,19 @@ CREATE TABLE orders(
 	FOREIGN KEY (cart_id) REFERENCES carts(id)
 );
 
-INSERT INTO users(id, username, password, full_name, role_id, toko_id) VALUES
-(1, "admin", "admin", "Administrator", 3, 1),
-(2, "mmukhtar", "pwmmukhtar", "Muhammad Mukhtar", 1, 2),
-(3, "fathur", "pwfathur", "Fathur Rohman", 1, 3),
-(4, "obie", "pwobie", "Obie Ananda", 2, 1);
-
 INSERT INTO toko(id, nama) VALUES
 (1, "Tidak ada toko"),
-(2, "Toko Mukhtar"),
-(3, "Toko Fathur");
+(2, "Toko Serba Ada"),
+(3, "Toko Bang Fathur");
+
+INSERT INTO users(id, username, password, full_name, toko_id, role) VALUES
+(1, "mmukhtar", "$2a$14$VQC3HrTWFV1THTB67iaQ1OfbsDD1lzBxBpYmXKmpXxSvhz6/dVmkC", "Muhammad Mukhtar Dwi Putra", 2, 1),
+(2, "fathur", "$2a$14$TqS2QWIy3xxmbvJ9DFbLZOeeIpzTK5aRR45jrMkSfHEkDJ1t.VKCu", "Muhammad Mukhtar Dwi Putra", 3, 1),
+(3, "obiea", "$2a$14$1dzedAhWAUYtFyt/ylDDC.98xmvt6OELiZrQ4C3ovxLeZw58qPHa6", "Muhammad Mukhtar Dwi Putra", 1, 2);
+
+INSERT INTO products(id, nama, harga, stock, toko_id) VALUES
+(1, "Pelembab Skintific Vit C", 50000, 23, 2),
+(2, "Serum Skintific Vit C", 75000, 10, 2),
+(3, "Toner Skintific Vit C", 60000, 12, 2),
+(4, "Pelembab Wardah AHA/BHA", 50000, 34, 3),
+(5, "Serum Wardah AHA/BHA", 50000, 39, 3);

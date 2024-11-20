@@ -42,7 +42,7 @@ func (h *handlerUser) RegisterUser(user entity.Users){
 	}
 
 	// Insert into the database
-	_, err = h.db.Exec("INSERT INTO users (username, password, full_name, toko_id, role) VALUES (?, ?, ?, ?, ?)", user.Username, hash, user.FullName, user.TokoID, user.ID)
+	_, err = h.db.Exec("INSERT INTO users (username, password, full_name, toko_id, role) VALUES (?, ?, ?, ?, ?)", user.Username, hash, user.FullName, user.TokoID, user.Role)
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
