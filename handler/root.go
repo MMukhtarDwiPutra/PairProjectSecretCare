@@ -1,19 +1,24 @@
 package handler
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
+// Define a single handler struct that handles both Auth and User logic
 type Handler struct {
-	Auth HandlerAuth
-	User HandlerUser
+	Handler *handler
 }
 
+// Define the handler struct which holds context and DB connection
 type handler struct {
-	db *sql.DB
+	ctx context.Context
+	db  *sql.DB
 }
 
-func NewHandler(db *sql.DB) Handler {
+// NewHandler creates a new Handler with both Auth and User logic combined.
+func NewHandler(ctx context.Context, db *sql.DB) Handler {
 	return Handler{
-		Auth: &handler{db: db},
-		User: &handler{db: db},
+		Handler: &handler{ctx: ctx, db: db},
 	}
 }

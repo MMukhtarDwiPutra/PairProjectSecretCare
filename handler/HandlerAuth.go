@@ -3,17 +3,38 @@ package handler
 import (
 	"SecretCare/entity"
 	"SecretCare/helpers"
+	"SecretCare/utils"
+	"context"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 type HandlerAuth interface {
-	RegisterUser(user entity.Users)
-	CreateToko(toko entity.Toko) int64
+	RegisterUser(ctx context.Context, user entity.Users)
+	CreateToko(ctx context.Context, toko entity.Toko) int64
+	Login(username, password string) (bool, string, context.Context)
 }
 
-func (h *handler) RegisterUser(user entity.Users) {
+func (h *handler) Login(username, password string) (bool, string, context.Context) {
+	user, err := h.GetUserByUsername(username)
+	if err != nil {
+		fmt.Println("Error retrieving user:", err)
+		return false, "", h.ctx
+	}
+
+	successLogin := helpers.CheckPasswordHash(password, user.Password)
+
+	if successLogin {
+		user := &entity.Users{ID: user.ID, Username: user.Username, FullName: user.FullName}
+		h.ctx = utils.SetUserInContext(h.ctx, user) // Set user in the context
+	}
+
+	fmt.Println("")
+	return successLogin, user.Role, h.ctx
+}
+
+func (h *handler) RegisterUser(ctx context.Context, user entity.Users) {
 	// Hash the password
 	hash, err := helpers.HashPassword(user.Password)
 	if err != nil {
@@ -30,7 +51,7 @@ func (h *handler) RegisterUser(user entity.Users) {
 	}
 }
 
-func (h *handler) CreateToko(toko entity.Toko) int64 {
+func (h *handler) CreateToko(ctx context.Context, toko entity.Toko) int64 {
 	// Insert into the database
 	result, err := h.db.Exec("INSERT INTO toko (nama) VALUES (?)", toko.Nama)
 	if err != nil {

@@ -5,7 +5,9 @@ import (
 	"SecretCare/entity"
 	"SecretCare/handler"
 	"SecretCare/helpers"
+	"SecretCare/utils"
 	"bufio" //Diimpor untuk bisa scan multiple string dari layar cli di program golang
+	"context"
 	"fmt"
 	"os" //Diimpor untuk bisa scan multiple string dari layar cli di program golang
 	"strings"
@@ -19,10 +21,11 @@ type CLI interface {
 
 type cli struct {
 	handler handler.Handler
+	ctx     context.Context
 }
 
-func NewCli(handler handler.Handler) *cli {
-	return &cli{handler}
+func NewCli(handler handler.Handler, ctx context.Context) *cli {
+	return &cli{handler: handler, ctx: ctx}
 }
 
 func (c *cli) Login(inputReader *bufio.Reader) (bool, string) {
@@ -36,11 +39,10 @@ func (c *cli) Login(inputReader *bufio.Reader) (bool, string) {
 	password, _ = inputReader.ReadString('\n')
 	password = strings.TrimSpace(password)
 
-	user := c.handler.User.GetUserByUsername(username)
-	successLogin := helpers.CheckPasswordHash(password, user.Password)
+	successLogin, role, updatedCtx := c.handler.Handler.Login(username, password)
 
-	fmt.Println("")
-	return successLogin, user.Role
+	c.ctx = updatedCtx
+	return successLogin, role
 }
 
 func (c *cli) Register(inputReader *bufio.Reader) {
@@ -68,7 +70,7 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 			namaToko, _ = inputReader.ReadString('\n')
 			toko.Nama = strings.TrimSpace(namaToko)
 
-			toko.ID = int(c.handler.Auth.CreateToko(toko))
+			toko.ID = int(c.handler.Handler.CreateToko(context.Background(), toko))
 
 			user.TokoID = toko.ID
 			user.Role = "Penjual"
@@ -105,7 +107,7 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 
 		// Check if passwords match
 		if user.Password == confirmPassword {
-			c.handler.Auth.RegisterUser(user)
+			c.handler.Handler.RegisterUser(context.Background(), user)
 			fmt.Println("Akun berhasil dibuat!")
 			break
 		} else {
@@ -119,8 +121,12 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 func (c *cli) MenuPenjual() {
 	var selesaiMenu bool = false
 
+	users, _ := utils.GetUserFromContext(c.ctx)
+
+	fmt.Print("Hallo mas " + users.FullName)
+
 	for !selesaiMenu {
-		fmt.Println("User Penjual Menu")
+		fmt.Println("\nUser Penjual Menu")
 		fmt.Println("1. Order Report")                   // Intermediate sql
 		fmt.Println("2. Product Report")                 // Intermediate sql
 		fmt.Println("3. Create New Produk untuk dijual") // easy golang
@@ -132,6 +138,7 @@ func (c *cli) MenuPenjual() {
 
 		switch inputMenu {
 		case 1:
+			c.handler.Handler.GetUserByUsername(users.Username)
 		case 2:
 		case 3:
 		case 4:
@@ -201,7 +208,6 @@ func (c *cli) MenuUtama() {
 	var inputMenu int
 	var selesaiMenu bool = false
 	inputReader := bufio.NewReader(os.Stdin) //Buat reader agar bisa scan (input oleh user) nanti
-
 	for !selesaiMenu {
 		fmt.Println("User Menu")
 		fmt.Println("1. Login")

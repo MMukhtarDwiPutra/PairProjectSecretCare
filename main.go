@@ -4,23 +4,18 @@ import (
 	"SecretCare/cli"
 	"SecretCare/config"
 	"SecretCare/handler"
+	"context"
 )
-
-type User struct {
-	username string
-}
-
-type ContextKey string
-
-const UserContextKey ContextKey = "user"
 
 func main() {
 
-	db := config.InitDatabase("root:@tcp(127.0.0.1:3306)/SecretCare2")
+	db := config.InitDatabase("root:@tcp(127.0.0.1:3307)/SecretCare")
 	defer db.Close()
 
-	handler := handler.NewHandler(db)
-	cli := cli.NewCli(handler)
+	var ctx context.Context = context.Background()
+
+	handler := handler.NewHandler(ctx, db)
+	cli := cli.NewCli(handler, ctx)
 
 	cli.MenuUtama()
 }
