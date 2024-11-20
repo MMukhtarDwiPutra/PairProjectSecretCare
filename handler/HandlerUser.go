@@ -20,10 +20,10 @@ type handlerUser struct{
 }
 
 func NewHandler(db *sql.DB) *handlerUser{
-	return &handler{db}
+	return &handlerUser{db}
 }
 
-func (h *handler) GetUserByUsername(username string) entity.Users{
+func (h *handlerUser) GetUserByUsername(username string) entity.Users{
 	var user entity.Users
 
 	row := h.db.QueryRow("SELECT role, password FROM users WHERE username = ?", username)
