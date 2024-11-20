@@ -18,11 +18,11 @@ type CLI interface{
 }
 
 type cli struct{
-	handler handler.Handler
+	handlerUser handler.HandlerUser
 }
 
-func NewCli(handler handler.Handler) *cli{
-	return &cli{handler}
+func NewCli(handlerUser handler.HandlerUser) *cli{
+	return &cli{handlerUser}
 }
 
 func (c *cli) Login(inputReader *bufio.Reader) (bool, string){
@@ -36,7 +36,7 @@ func (c *cli) Login(inputReader *bufio.Reader) (bool, string){
 	password, _ = inputReader.ReadString('\n')
 	password = strings.TrimSpace(password)
 
-	user := c.handler.GetUserByUsername(username)
+	user := c.handlerUser.GetUserByUsername(username)
 	successLogin := helpers.CheckPasswordHash(password, user.Password)
 
 	fmt.Println("")
@@ -68,8 +68,8 @@ func (c *cli) Register(inputReader *bufio.Reader){
 			namaToko, _ = inputReader.ReadString('\n')
 			toko.Nama = strings.TrimSpace(namaToko)
 
-			toko.ID = int(c.handler.CreateToko(toko));
-			
+			toko.ID = int(c.handlerUser.CreateToko(toko));
+
 			user.TokoID = toko.ID
 			user.Role = "Penjual"
 		}else if(inputRole == 2){
@@ -105,7 +105,7 @@ func (c *cli) Register(inputReader *bufio.Reader){
 
 		// Check if passwords match
 		if user.Password == confirmPassword {
-			c.handler.RegisterUser(user)
+			c.handlerUser.RegisterUser(user)
 			fmt.Println("Akun berhasil dibuat!")
 			break
 		} else {
