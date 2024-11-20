@@ -120,7 +120,7 @@ func (c *cli) MenuPenjual(){
 	var selesaiMenu bool = false
 
 	for !selesaiMenu{
-		fmt.Println("User Menu")
+		fmt.Println("User Penjual Menu")
 		fmt.Println("1. Order Report") // Intermediate sql
 		fmt.Println("2. Product Report") // Intermediate sql
 		fmt.Println("3. Create New Produk untuk dijual") // easy golang
@@ -150,7 +150,7 @@ func (c *cli) MenuPembeli(){
 	var selesaiMenu bool = false
 
 	for !selesaiMenu{
-		fmt.Println("User Menu")
+		fmt.Println("User Pembeli Menu")
 		fmt.Println("1. Add Cart") // Intermediate sql golang
 		fmt.Println("2. Show Cart") // Easy sql
 		fmt.Println("3. Checkout") // Hard beban kerja, sql golang
