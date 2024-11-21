@@ -173,7 +173,7 @@ func (c *cli) MenuPenjual() {
 
 		switch inputMenu {
 		case 1:
-			c.handler.Handler.GetUserByUsername(users.Username)
+			c.handler.Handler.ReportUserWithHighestSpending()
 		case 2:
 		case 3:
 		case 4:
@@ -199,7 +199,8 @@ func (c *cli) MenuPembeli() {
 		fmt.Println("4. Delete Cart") // easy sql
 		fmt.Println("5. Update Cart") // intermediate sql golang
 		fmt.Println("6. Akun")
-		fmt.Println("7. Logout")
+		fmt.Println("7. Buyer spending report")
+		fmt.Println("8. Logout")
 		inputMenu := helpers.InputAndHandlingNumber("Masukan nomor menu yang ingin dipilih: ")
 
 		switch inputMenu {
@@ -211,6 +212,8 @@ func (c *cli) MenuPembeli() {
 		case 6:
 			c.MenuAkun()
 		case 7:
+			c.handler.Handler.ReportBuyerSpending()
+		case 8:
 			selesaiMenu = true
 		}
 
