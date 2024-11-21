@@ -13,7 +13,7 @@ func (c *cli) UpdateMyAccount() {
 
 	var username, password, fullName *string
 
-	userInput := helpers.InputAndHandlingText("Masukan username baru (atau tekan Enter untuk melewati): ")
+	userInput := helpers.InputAndHandlingText("\nMasukan username baru (atau tekan Enter untuk melewati): ")
 	if userInput != "" {
 		username = &userInput
 	}
@@ -36,7 +36,7 @@ func (c *cli) UpdateMyAccount() {
 	done <- true
 	fmt.Print("\r                \r")
 
-	newUpdatedUser := &entity.Users{ID: user.ID, TokoID: user.TokoID}
+	newUpdatedUser := &entity.Users{ID: user.ID, Username: user.Username, FullName: user.FullName, TokoID: user.TokoID}
 	if username != nil {
 		newUpdatedUser.Username = *username
 	}
@@ -56,8 +56,11 @@ func (c *cli) UpdateMyAccount() {
 		return
 	}
 
-	fmt.Println("Data akun berhasil diubah.")
-	fmt.Printf("Informasi akun terbaru:\nUsername: %s\nNama Lengkap: %s\n", updatedUser.Username, updatedUser.FullName)
+	fmt.Println("")
+	fmt.Println("==========================================================")
+	fmt.Println("=============Data akun berhasil diubah.===================")
+	fmt.Println("==========================================================")
+	fmt.Printf("\nInformasi akun terbaru:\n\nUsername: %s\nNama Lengkap: %s\n", updatedUser.Username, updatedUser.FullName)
 }
 
 func (c *cli) DeleteMyAccount() {
