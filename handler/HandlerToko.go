@@ -2,19 +2,31 @@ package handler
 
 import(
 	"SecretCare/entity"
-	"SecretCare/helpers"
-	"SecretCare/utils"
 	"context"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
+	"database/sql"
 )
 
 type HandlerToko interface {
 	CreateToko(ctx context.Context, toko entity.Toko) int64
 }
 
-func (h *handler) CreateToko(ctx context.Context, toko entity.Toko) int64 {
+type handlerToko struct {
+	ctx context.Context
+	db  *sql.DB
+}
+
+// NewHandlerAuth membuat instance baru dari HandlerAuth
+func NewHandlerToko(ctx context.Context, db *sql.DB) *handlerToko {
+	return &handlerToko{
+		ctx: ctx,
+		db:  db,
+	}
+}
+
+func (h *handlerToko) CreateToko(ctx context.Context, toko entity.Toko) int64 {
 	// Insert into the database
 	result, err := h.db.Exec("INSERT INTO toko (nama) VALUES (?)", toko.Nama)
 	if err != nil {

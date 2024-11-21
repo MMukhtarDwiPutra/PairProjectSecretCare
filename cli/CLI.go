@@ -21,11 +21,11 @@ type CLI interface {
 }
 
 type cli struct {
-	handler handler.Handler
+	handler *handler.Handler
 	ctx     context.Context
 }
 
-func NewCli(handler handler.Handler, ctx context.Context) *cli {
+func NewCli(handler *handler.Handler, ctx context.Context) *cli {
 	return &cli{handler: handler, ctx: ctx}
 }
 
@@ -40,7 +40,7 @@ func (c *cli) Login(inputReader *bufio.Reader) (bool, string) {
 	password, _ = inputReader.ReadString('\n')
 	password = strings.TrimSpace(password)
 
-	successLogin, role, updatedCtx := c.handler.Handler.Login(username, password)
+	successLogin, role, updatedCtx := c.handler.Auth.Login(username, password)
 
 
 	c.ctx = updatedCtx
@@ -73,7 +73,7 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 			namaToko, _ = inputReader.ReadString('\n')
 			toko.Nama = strings.TrimSpace(namaToko)
 
-			toko.ID = int(c.handler.Handler.CreateToko(context.Background(), toko))
+			toko.ID = int(c.handler.Toko.CreateToko(context.Background(), toko))
 
 			user.TokoID = toko.ID
 			user.Role = "Penjual"
@@ -110,7 +110,7 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 
 		// Check if passwords match
 		if user.Password == confirmPassword {
-			c.handler.Handler.RegisterUser(context.Background(), user)
+			c.handler.Auth.RegisterUser(context.Background(), user)
 			fmt.Println("Akun berhasil dibuat!")
 			break
 		} else {
@@ -139,7 +139,7 @@ func (c *cli) UpdateMyAccount() {
 		fullName = &fullNameInput
 	}
 
-	ctx, err := c.handler.Handler.UpdateMyAccount(username, password, fullName)
+	ctx, err := c.handler.User.UpdateMyAccount(username, password, fullName)
 	c.ctx = ctx
 	if err != nil {
 		fmt.Printf("Gagal mengubah data akun: %v\n", err)
@@ -165,7 +165,7 @@ func (c *cli) MenuProductReport(){
 	fmt.Println("==========================================================")
 	fmt.Printf("%-25s %-10v %s\n", "Nama Produk", "Penjualan", "Pendapatan") // Header with fixed column widths
 
-	productReports := c.handler.Handler.GetProductReport(user.TokoID)
+	productReports := c.handler.Product.GetProductReport(user.TokoID)
 	
 	for _, productReport := range productReports{
 		fmt.Printf("%-25s %-10v %.2f\n", productReport.Nama, productReport.TotalPenjualan, productReport.TotalPendapatan) // Header with fixed column widths
@@ -175,7 +175,7 @@ func (c *cli) MenuProductReport(){
 func (c *cli) MenuUpdateStock(){
 	user, _ := utils.GetUserFromContext(c.ctx)
 
-	products := c.handler.Handler.GetProductsByTokoID(user.TokoID)
+	products := c.handler.Product.GetProductsByTokoID(user.TokoID)
 
 	fmt.Println("")
 	fmt.Println("=============================")
@@ -196,13 +196,13 @@ func (c *cli) MenuUpdateStock(){
 
 	stock := helpers.InputAndHandlingNumber("Masukan jumlah stock terbaru: ")
 
-	c.handler.Handler.UpdateStockById(produkID, stock)
+	c.handler.Product.UpdateStockById(produkID, stock)
 }
 
 func (c *cli) MenuDeleteProduct(){
 	user, _ := utils.GetUserFromContext(c.ctx)
 
-	products := c.handler.Handler.GetProductsByTokoID(user.TokoID)
+	products := c.handler.Product.GetProductsByTokoID(user.TokoID)
 	fmt.Println("")
 	fmt.Println("=============================")
 	fmt.Println("Delete Produk dari Toko")
@@ -218,7 +218,7 @@ func (c *cli) MenuDeleteProduct(){
 		return
 	}
 
-	c.handler.Handler.DeleteProductById(produkID)
+	c.handler.Product.DeleteProductById(produkID)
 	fmt.Println("Berhasil dihapus!")
 }
 
@@ -250,7 +250,7 @@ func (c *cli) MenuCreateNewProduct(){
 	product.Stock, _ = strconv.Atoi(stockString);
 
 	product.TokoID = user.TokoID
-	c.handler.Handler.CreateNewProduct(product);
+	c.handler.Product.CreateNewProduct(product);
 }
 
 func (c *cli) MenuPenjual() {
@@ -273,7 +273,7 @@ func (c *cli) MenuPenjual() {
 
 		switch inputMenu{
 			case 1:
-        c.handler.Handler.ReportUserWithHighestSpending()
+        		c.handler.User.ReportUserWithHighestSpending()
 			case 2:
 				c.MenuProductReport()
 			case 3:
@@ -316,7 +316,7 @@ func (c *cli) MenuPembeli() {
 		case 6:
 			c.MenuAkun()
 		case 7:
-			c.handler.Handler.ReportBuyerSpending()
+			c.handler.User.ReportBuyerSpending()
 		case 8:
 			selesaiMenu = true
 		}
@@ -337,7 +337,7 @@ func (c *cli) MenuAkun() {
 
 		switch inputMenu {
 		case 1:
-			ctx, _ := c.handler.Handler.DeleteMyAccount()
+			ctx, _ := c.handler.User.DeleteMyAccount()
 			c.ctx = ctx
 			c.MenuUtama()
 		case 2:

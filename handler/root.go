@@ -5,23 +5,24 @@ import (
 	"database/sql"
 )
 
-// Define a single handler struct that handles both Auth and User logic
+// Handler adalah root struct yang menggabungkan semua sub-handler
 type Handler struct {
-	Handler *handler
-	handlerUser HandlerUser
-	handlerAuth	HandlerAuth
-	handlerProduct HandlerProduct
-}
-
-// Define the handler struct which holds context and DB connection
-type handler struct {
+	Auth    HandlerAuth
+	Toko    HandlerToko
+	User    HandlerUser
+	Product HandlerProduct
 	ctx context.Context
-	db  *sql.DB
+	db 	*sql.DB
 }
 
-// NewHandler creates a new Handler with both Auth and User logic combined.
-func NewHandler(ctx context.Context, db *sql.DB) Handler {
-	return Handler{
-		Handler: &handler{ctx: ctx, db: db},
+// NewHandler membuat instance dari root Handler dan semua sub-handler
+func NewHandler(ctx context.Context, db *sql.DB) *Handler {
+	return &Handler{
+		Auth:    NewHandlerAuth(ctx, db),
+		Toko:    NewHandlerToko(ctx, db),
+		User:    NewHandlerUser(ctx, db),
+		Product: NewHandlerProduct(ctx, db),
+		ctx: ctx,
+		db: db,
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
+	"database/sql"
 )
 
 type HandlerAuth interface {
@@ -15,8 +16,23 @@ type HandlerAuth interface {
 	Login(username, password string) (bool, string, context.Context)
 }
 
-func (h *handler) Login(username, password string) (bool, string, context.Context) {
-	user, err := h.GetUserByUsername(username)
+type handlerAuth struct {
+	handlerUser HandlerUser
+	ctx context.Context
+	db  *sql.DB
+}
+
+// NewHandlerAuth membuat instance baru dari HandlerAuth
+func NewHandlerAuth(ctx context.Context, db *sql.DB) HandlerAuth {
+	return &handlerAuth{
+		handlerUser:    NewHandlerUser(ctx, db),
+		ctx: ctx,
+		db:  db,
+	}
+}
+
+func (h *handlerAuth) Login(username, password string) (bool, string, context.Context) {
+	user, err := h.handlerUser.GetUserByUsername(username)
 	if err != nil {
 		fmt.Println("Error retrieving user:", err)
 		return false, "", h.ctx
@@ -33,7 +49,7 @@ func (h *handler) Login(username, password string) (bool, string, context.Contex
 	return successLogin, user.Role, h.ctx
 }
 
-func (h *handler) RegisterUser(ctx context.Context, user entity.Users) {
+func (h *handlerAuth) RegisterUser(ctx context.Context, user entity.Users) {
 	// Hash the password
 	hash, err := helpers.HashPassword(user.Password)
 	if err != nil {
