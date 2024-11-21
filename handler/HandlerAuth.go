@@ -26,7 +26,7 @@ func (h *handler) Login(username, password string) (bool, string, context.Contex
 	successLogin := helpers.CheckPasswordHash(password, user.Password)
 
 	if successLogin {
-		user := &entity.Users{ID: user.ID, Username: user.Username, FullName: user.FullName}
+		user := &entity.Users{ID: user.ID, Username: user.Username, FullName: user.FullName, TokoID: user.TokoID}
 		h.ctx = utils.SetUserInContext(h.ctx, user) // Set user in the context
 	}
 

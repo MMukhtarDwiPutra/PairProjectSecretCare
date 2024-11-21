@@ -144,9 +144,17 @@ func (c *cli) UpdateMyAccount() {
 	c.ctx = ctx
 	if err != nil {
 		fmt.Printf("Gagal mengubah data akun: %v\n", err)
-	} else {
-		fmt.Println("Data akun berhasil diubah")
+		return
 	}
+
+	updatedUser, ok := utils.GetUserFromContext(c.ctx)
+	if !ok {
+		fmt.Println("Tidak dapat mengambil data akun yang diperbarui.")
+		return
+	}
+
+	fmt.Println("Data akun berhasil diubah.")
+	fmt.Printf("Informasi akun terbaru:\nUsername: %s\nNama Lengkap: %s\n", updatedUser.Username, updatedUser.FullName)
 }
 
 func (c *cli) MenuPenjual() {
@@ -169,6 +177,7 @@ func (c *cli) MenuPenjual() {
 
 		switch inputMenu{
 			case 1:
+        c.handler.Handler.ReportUserWithHighestSpending()
 			case 2:
 				c.MenuProductReport()
 			case 3:
@@ -198,7 +207,8 @@ func (c *cli) MenuPembeli() {
 		fmt.Println("4. Delete Cart") // easy sql
 		fmt.Println("5. Update Cart") // intermediate sql golang
 		fmt.Println("6. Akun")
-		fmt.Println("7. Logout")
+		fmt.Println("7. Buyer spending report")
+		fmt.Println("8. Logout")
 		inputMenu := helpers.InputAndHandlingNumber("Masukan nomor menu yang ingin dipilih: ")
 
 		switch inputMenu {
@@ -210,6 +220,8 @@ func (c *cli) MenuPembeli() {
 		case 6:
 			c.MenuAkun()
 		case 7:
+			c.handler.Handler.ReportBuyerSpending()
+		case 8:
 			selesaiMenu = true
 		}
 
@@ -229,6 +241,9 @@ func (c *cli) MenuAkun() {
 
 		switch inputMenu {
 		case 1:
+			ctx, _ := c.handler.Handler.DeleteMyAccount()
+			c.ctx = ctx
+			c.MenuUtama()
 		case 2:
 			c.UpdateMyAccount()
 		case 3:
