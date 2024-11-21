@@ -1,10 +1,24 @@
 package entity
 
 type Users struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"-"`
-	FullName string `json:"full_name"`
-	TokoID   int    `json:"toko_id"`
-	Role     string `json:"role"`
+	ID       int
+	Username string
+	Password string
+	FullName string
+	TokoID   int
+	Role     string
+}
+
+type UserBuyerReport struct {
+	OrderID       int
+	UserID        int
+	FullName      string
+	TotalSpending float64
+	TotalQuantity int
+}
+
+type UserReportHighestSpending struct {
+	UserId        int
+	FullName      string
+	TotalSpending float64
 }
