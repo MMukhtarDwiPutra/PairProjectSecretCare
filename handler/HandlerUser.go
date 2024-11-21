@@ -1,68 +1,70 @@
 package handler
 
-import(
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
-	"fmt"
-	"SecretCare/helpers"
+import (
 	"SecretCare/entity"
+	"SecretCare/utils"
+	"context"
+	"fmt"
+
+	_ "github.com/go-sql-driver/mysql"
 )
-
-type HandlerUser interface{
-	GetUserByUsername(username string) entity.Users
-	RegisterUser(user entity.Users)
-	CreateToko(toko entity.Toko) int64
+type HandlerUser interface {
+	GetUserByUsername(username string) (*entity.Users, error)
+	DeleteMyAccount(userId int) error
+	UpdateMyAccount(username, password, fullName string) error
 }
 
-type handlerUser struct{
-	db *sql.DB
-}
-
-func NewHandlerUser(db *sql.DB) *handlerUser{
-	return &handlerUser{db}
-}
-
-func (h *handlerUser) GetUserByUsername(username string) entity.Users{
+func (h *handler) GetUserByUsername(username string) (*entity.Users, error) {
 	var user entity.Users
+	row := h.db.QueryRow("SELECT id, username, full_name, role, password FROM users WHERE username = ?", username)
+  
+	if err := row.Scan(&user.ID, &user.Username, &user.FullName, &user.Role, &user.Password); err != nil {
+		return nil, fmt.Errorf("error scanning user: %w", err)
+	}
 
-	row := h.db.QueryRow("SELECT id, role, password, toko_id FROM users WHERE username = ?", username)
-	row.Scan(&user.ID, &user.Role, &user.Password, &user.TokoID)
 
-	return user
+	return &user, nil
 }
 
-func (h *handlerUser) RegisterUser(user entity.Users){
-	// Hash the password
-	hash, err := helpers.HashPassword(user.Password)
-	if err != nil {
-		fmt.Println("Failed to hash password:", err)
-		return
+func (h *handler) UpdateMyAccount(username, password, fullName *string) (context.Context, error) {
+	user, ok := utils.GetUserFromContext(h.ctx)
+	if !ok {
+		return h.ctx, fmt.Errorf("user not found in context")
 	}
 
-	// Insert into the database
-	_, err = h.db.Exec("INSERT INTO users (username, password, full_name, toko_id, role) VALUES (?, ?, ?, ?, ?)", user.Username, hash, user.FullName, user.TokoID, user.Role)
-	if err != nil {
-		fmt.Println("Error executing query:", err)
-		fmt.Println()
-		return
-	}
-}
+	query := "UPDATE users SET "
+	params := []interface{}{}
 
-func (h *handlerUser) CreateToko(toko entity.Toko) int64{
-	// Insert into the database
-	result, err := h.db.Exec("INSERT INTO toko (nama) VALUES (?)", toko.Nama)
-	if err != nil {
-		fmt.Println("Error executing query:", err)
-		fmt.Println()
-		return 0
+	if username != nil {
+		query += "username = ?, "
+		params = append(params, *username)
+	}
+	if password != nil {
+		query += "password = ?, "
+		params = append(params, *password)
+	}
+	if fullName != nil {
+		query += "full_name = ?, "
+		params = append(params, *fullName)
 	}
 
-	// Get the last inserted ID (if needed)
-	lastInsertID, err := result.LastInsertId()
-	if err != nil {
-		fmt.Println("Error getting last insert ID:", err)
-		return 0
+	query = query[:len(query)-2]
+	query += " WHERE id = ?"
+	params = append(params, user.ID)
+
+	_, err := h.db.Exec(query, params...)
+
+	newUpdatedUser := &entity.Users{ID: user.ID}
+	if username != nil {
+		newUpdatedUser.Username = *username
 	}
-	fmt.Printf("Toko baru berhasil dibuat: %v\n", toko.Nama)
-	return lastInsertID
+	if fullName != nil {
+		newUpdatedUser.FullName = *fullName
+	}
+
+	h.ctx = utils.SetUserInContext(h.ctx, newUpdatedUser)
+	if err != nil {
+		return h.ctx, fmt.Errorf("failed to update user: %w", err)
+	}
+	return h.ctx, nil
 }
