@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"os" //Diimpor untuk bisa scan multiple string dari layar cli di program golang
 	"strings"
+	"strconv"
 )
+
 
 type CLI interface {
 	Login(inputReader *bufio.Reader) (bool, string)
@@ -41,8 +43,10 @@ func (c *cli) Login(inputReader *bufio.Reader) (bool, string) {
 
 	successLogin, role, updatedCtx := c.handler.Handler.Login(username, password)
 
+
 	c.ctx = updatedCtx
 	return successLogin, role
+
 }
 
 func (c *cli) Register(inputReader *bufio.Reader) {
@@ -163,17 +167,20 @@ func (c *cli) MenuPenjual() {
 		fmt.Println("7. Logout")
 		inputMenu := helpers.InputAndHandlingNumber("Masukan nomor menu yang ingin dipilih: ")
 
-		switch inputMenu {
-		case 1:
-			c.handler.Handler.GetUserByUsername(users.Username)
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-			c.MenuAkun()
-		case 7:
-			selesaiMenu = true
+		switch inputMenu{
+			case 1:
+			case 2:
+				c.MenuProductReport()
+			case 3:
+				c.MenuCreateNewProduct()
+			case 4:
+				c.MenuUpdateStock()
+			case 5:
+				c.MenuDeleteProduct()
+			case 6:
+				c.MenuAkun()
+			case 7:
+				selesaiMenu = true
 		}
 
 		fmt.Println()
