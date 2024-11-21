@@ -8,6 +8,9 @@ import (
 // Define a single handler struct that handles both Auth and User logic
 type Handler struct {
 	Handler *handler
+	handlerUser HandlerUser
+	handlerAuth	HandlerAuth
+	handlerProduct HandlerProduct
 }
 
 // Define the handler struct which holds context and DB connection

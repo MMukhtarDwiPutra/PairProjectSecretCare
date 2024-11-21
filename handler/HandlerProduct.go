@@ -1,7 +1,6 @@
 package handler
 
 import(
-	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"fmt"
 	"SecretCare/entity"
@@ -15,15 +14,8 @@ type HandlerProduct interface{
 	GetProductReport(tokoID int) []entity.ProductReport
 }
 
-type handlerProduct struct{
-	db *sql.DB
-}
 
-func NewHandlerProduct(db *sql.DB) *handlerProduct{
-	return &handlerProduct{db}
-}
-
-func (h *handlerProduct) CreateNewProduct(product entity.Product){
+func (h *handler) CreateNewProduct(product entity.Product){
 	// Insert into the database
 	_, err := h.db.Exec("INSERT INTO products (nama, harga, stock, toko_id) VALUES (?, ?, ?, ?)", product.Nama, product.Harga, product.Stock, product.TokoID)
 	if err != nil {
@@ -35,7 +27,7 @@ func (h *handlerProduct) CreateNewProduct(product entity.Product){
 	fmt.Println("Produk berhasil ditambahkan!")
 }
 
-func (h *handlerProduct) GetProductsByTokoID(tokoID int) []entity.Product{
+func (h *handler) GetProductsByTokoID(tokoID int) []entity.Product{
 	var products []entity.Product
 
 	// Query the database
@@ -67,7 +59,7 @@ func (h *handlerProduct) GetProductsByTokoID(tokoID int) []entity.Product{
 	return products
 }
 
-func (h *handlerProduct) UpdateStockById(id int, stock int){
+func (h *handler) UpdateStockById(id int, stock int){
 	_, err := h.db.Exec("UPDATE products SET stock = ? WHERE id = ?", stock, id)
 
 	if err != nil {
@@ -78,7 +70,7 @@ func (h *handlerProduct) UpdateStockById(id int, stock int){
 	fmt.Println("Stock product berhasil diupdate!")
 }
 
-func (h *handlerProduct) DeleteProductById(id int){
+func (h *handler) DeleteProductById(id int){
 	_, err := h.db.Exec("DELETE FROM products WHERE id = ?", id)
 
 	if err != nil {
@@ -89,7 +81,7 @@ func (h *handlerProduct) DeleteProductById(id int){
 	fmt.Println("Product berhasil dihapus!")
 }
 
-func (h *handlerProduct) GetProductReport(tokoID int) []entity.ProductReport{
+func (h *handler) GetProductReport(tokoID int) []entity.ProductReport{
 	var productReports []entity.ProductReport
 	rows, err := h.db.Query(`SELECT 
 							    products.nama, 
