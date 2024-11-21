@@ -11,7 +11,13 @@ func (c *cli) ReportBuyerSpending() {
 		fmt.Print("user not found in context")
 	}
 
+	done := make(chan bool)
+	go utils.LoadingSpinner(done)
+
 	spendingReports, _ := c.handler.User.ReportBuyerSpending(user.ID)
+
+	done <- true
+	fmt.Print("\r                \r")
 
 	fmt.Println("\n+----------------+-----------------------+-----------------+------------+")
 	fmt.Println("| Order ID      | User ID               | Full Name             | Total Spending  | Total Qty |")
@@ -33,7 +39,13 @@ func (c *cli) ReportUserWithHighestSpending() {
 		fmt.Print("user not found in context")
 	}
 
+	done := make(chan bool)
+	go utils.LoadingSpinner(done)
+
 	userHighestSpending, _ := c.handler.User.ReportUserWithHighestSpending(user.ID)
+
+	done <- true
+	fmt.Print("\r                \r")
 
 	fmt.Println("\n+----------------+-----------------------+-----------------+------------+")
 	fmt.Println("| User ID       | Full Name             | Total Spending  |")

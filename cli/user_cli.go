@@ -28,7 +28,14 @@ func (c *cli) UpdateMyAccount() {
 		fullName = &fullNameInput
 	}
 
+	done := make(chan bool)
+	go utils.LoadingSpinner(done)
+
 	err := c.handler.User.UpdateMyAccount(user.ID, username, password, fullName)
+
+	done <- true
+	fmt.Print("\r                \r")
+
 	newUpdatedUser := &entity.Users{ID: user.ID, TokoID: user.TokoID}
 	if username != nil {
 		newUpdatedUser.Username = *username
@@ -56,9 +63,16 @@ func (c *cli) UpdateMyAccount() {
 func (c *cli) DeleteMyAccount() {
 	user, ok := utils.GetUserFromContext(c.ctx)
 	if !ok {
-		fmt.Errorf("user not found in context")
+		fmt.Print("user not found in context")
 	}
 
+	done := make(chan bool)
+	go utils.LoadingSpinner(done)
+
 	c.handler.User.DeleteMyAccount(user.ID)
+
+	done <- true
+	fmt.Print("\r                \r")
+
 	c.ctx = context.Background()
 }
