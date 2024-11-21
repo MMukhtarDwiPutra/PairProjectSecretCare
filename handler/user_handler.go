@@ -84,46 +84,50 @@ func (h *handlerUser) DeleteMyAccount(userId int) error {
 func (h *handlerUser) ReportBuyerSpending(userId int) ([]entity.UserBuyerReport, error) {
 	var orders []entity.UserBuyerReport
 	query := `
-    SELECT 
-        o.id AS order_id, 
-        u.id AS user_id, 
-        u.full_name, 
-        SUM(ci.qty * ci.price_at_purchase) AS total_spending, 
-        SUM(ci.qty) AS total_qty
-    FROM 
-        users u
-    JOIN 
-        carts c ON u.id = c.user_id
-    JOIN 
-        cart_items ci ON c.id = ci.cart_id 
-    JOIN 
-        orders o ON c.id = o.cart_id
-    WHERE 
-        u.role = 'Pembeli'
-        AND c.status = 'Checked Out'
-        AND u.id = ? 
-    GROUP BY 
-        o.id, u.id
-    ORDER BY 
-        total_spending DESC;
-    `
+		SELECT 
+			o.id AS order_id, 
+			u.id AS user_id, 
+			u.full_name, 
+			SUM(ci.qty * ci.price_at_purchase) AS total_spending, 
+			SUM(ci.qty) AS total_qty
+		FROM 
+			users u
+		JOIN 
+			carts c ON u.id = c.user_id
+		JOIN 
+			cart_items ci ON c.id = ci.cart_id 
+		JOIN 
+			orders o ON c.id = o.cart_id
+		WHERE 
+			u.role = 'Pembeli'
+			AND c.status = 'Checked Out'
+			AND u.id = ? 
+		GROUP BY 
+			o.id, u.id
+		ORDER BY 
+			total_spending DESC;
+	`
 	rows, err := h.db.Query(query, userId)
 	if err != nil {
-		log.Print("Error fetching records: ", err)
+		log.Printf("Error fetching buyer spending records for user ID %d: %v", userId, err)
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var orderReport entity.UserBuyerReport
-
 		err = rows.Scan(&orderReport.OrderID, &orderReport.UserID, &orderReport.FullName, &orderReport.TotalSpending, &orderReport.TotalQuantity)
 		if err != nil {
-			log.Print("Error scanning record: ", err)
+			log.Printf("Error scanning buyer spending record for user ID %d: %v", userId, err)
 			return nil, err
 		}
-
 		orders = append(orders, orderReport)
+	}
+
+	// Check if any error occurred during row iteration
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating buyer spending records for user ID %d: %v", userId, err)
+		return nil, err
 	}
 
 	return orders, nil
@@ -141,7 +145,7 @@ func (h *handlerUser) ReportUserWithHighestSpending(tokoId int) ([]entity.UserRe
 		JOIN 
 			carts c ON u.id = c.user_id
 		JOIN 
-			cart_items ci ON c.id = ci.user_id
+			cart_items ci ON c.id = ci.cart_id
 		WHERE 
 			c.status = 'Checked Out'
 			AND u.toko_id = ?
@@ -153,7 +157,6 @@ func (h *handlerUser) ReportUserWithHighestSpending(tokoId int) ([]entity.UserRe
 	`
 
 	rows, err := h.db.Query(query, tokoId)
-
 	if err != nil {
 		log.Print("Error fetching records: ", err)
 		return nil, err
@@ -167,6 +170,13 @@ func (h *handlerUser) ReportUserWithHighestSpending(tokoId int) ([]entity.UserRe
 			log.Print("Error scanning record: ", err)
 			return nil, err
 		}
+		users = append(users, user) // Add the user to the slice
+	}
+
+	// Check for any error encountered during iteration
+	if err = rows.Err(); err != nil {
+		log.Print("Error iterating rows: ", err)
+		return nil, err
 	}
 
 	return users, nil

@@ -120,93 +120,6 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 	fmt.Println("")
 }
 
-func (c *cli) UpdateMyAccount() {
-	user, _ := utils.GetUserFromContext(c.ctx)
-
-	var username, password, fullName *string
-
-	userInput := helpers.InputAndHandlingText("Masukan username baru (atau tekan Enter untuk melewati): ")
-	if userInput != "" {
-		username = &userInput
-	}
-
-	passwordInput := helpers.InputAndHandlingText("Masukan password baru (atau tekan Enter untuk melewati): ")
-	if passwordInput != "" {
-		password = &passwordInput
-	}
-
-	fullNameInput := helpers.InputAndHandlingText("Masukan nama lengkap baru (atau tekan Enter untuk melewati): ")
-	if fullNameInput != "" {
-		fullName = &fullNameInput
-	}
-
-	err := c.handler.User.UpdateMyAccount(user.ID, username, password, fullName)
-	newUpdatedUser := &entity.Users{ID: user.ID, TokoID: user.TokoID}
-	if username != nil {
-		newUpdatedUser.Username = *username
-	}
-	if fullName != nil {
-		newUpdatedUser.FullName = *fullName
-	}
-
-	c.ctx = utils.SetUserInContext(c.ctx, newUpdatedUser)
-	if err != nil {
-		fmt.Printf("Gagal mengubah data akun: %v\n", err)
-		return
-	}
-
-	updatedUser, ok := utils.GetUserFromContext(c.ctx)
-	if !ok {
-		fmt.Println("Tidak dapat mengambil data akun yang diperbarui.")
-		return
-	}
-
-	fmt.Println("Data akun berhasil diubah.")
-	fmt.Printf("Informasi akun terbaru:\nUsername: %s\nNama Lengkap: %s\n", updatedUser.Username, updatedUser.FullName)
-}
-
-func (c *cli) ReportBuyerSpending() {
-	user, ok := utils.GetUserFromContext(c.ctx)
-	if !ok {
-		fmt.Errorf("user not found in context")
-	}
-
-	spendingReports, _ := c.handler.User.ReportBuyerSpending(user.ID)
-
-	fmt.Println("\n+----------------+-----------------------+-----------------+------------+")
-	fmt.Println("| Order ID      | User ID               | Full Name             | Total Spending  | Total Qty |")
-	fmt.Println("+----------------+-----------------------+-----------------+------------+")
-
-	var totalAmount float64
-	for _, spendingReport := range spendingReports {
-		totalAmount += spendingReport.TotalSpending
-		fmt.Printf("| %-14d | %-21d | %-21s | %-15.2f | %-10d |\n", spendingReport.OrderID, spendingReport.UserID, spendingReport.FullName, spendingReport.TotalSpending, spendingReport.TotalQuantity)
-	}
-
-	fmt.Println("+----------------+-----------------------+-----------------+------------+")
-	fmt.Printf("\nTotal Amount for All Orders: %-15.2f\n", totalAmount)
-}
-
-func (c *cli) ReportUserWithHighestSpending() {
-	user, ok := utils.GetUserFromContext(c.ctx)
-	if !ok {
-		fmt.Errorf("user not found in context")
-	}
-
-	userHighestSpending, _ := c.handler.User.ReportUserWithHighestSpending(user.ID)
-
-	fmt.Println("\n+----------------+-----------------------+-----------------+------------+")
-	fmt.Println("| User ID       | Full Name             | Total Spending  |")
-	fmt.Println("+----------------+-----------------------+-----------------+")
-
-	var totalAmount float64
-	for _, spendingReport := range userHighestSpending {
-		totalAmount += spendingReport.TotalSpending
-		fmt.Printf("| %-14d | %-21s | %-2.2f |\n", spendingReport.UserId, spendingReport.FullName, spendingReport.TotalSpending)
-	}
-
-	fmt.Println("+----------------+-----------------------+-----------------+------------+")
-}
 
 func (c *cli) MenuProductReport() {
 	user, _ := utils.GetUserFromContext(c.ctx)
@@ -379,10 +292,6 @@ func (c *cli) MenuPembeli() {
 
 func (c *cli) MenuAkun() {
 	var selesaiMenu bool = false
-	user, ok := utils.GetUserFromContext(c.ctx)
-	if !ok {
-		fmt.Errorf("user not found in context")
-	}
 
 	for !selesaiMenu {
 		fmt.Println("User Menu")
@@ -393,7 +302,7 @@ func (c *cli) MenuAkun() {
 
 		switch inputMenu {
 		case 1:
-			c.handler.User.DeleteMyAccount(user.ID)
+			c.DeleteMyAccount()
 			c.ctx = context.Background()
 			c.MenuUtama()
 		case 2:
