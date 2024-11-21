@@ -118,6 +118,33 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 	fmt.Println("")
 }
 
+func (c *cli) UpdateMyAccount() {
+	var username, password, fullName *string
+
+	userInput := helpers.InputAndHandlingText("Masukan username baru (atau tekan Enter untuk melewati): ")
+	if userInput != "" {
+		username = &userInput
+	}
+
+	passwordInput := helpers.InputAndHandlingText("Masukan password baru (atau tekan Enter untuk melewati): ")
+	if passwordInput != "" {
+		password = &passwordInput
+	}
+
+	fullNameInput := helpers.InputAndHandlingText("Masukan nama lengkap baru (atau tekan Enter untuk melewati): ")
+	if fullNameInput != "" {
+		fullName = &fullNameInput
+	}
+
+	ctx, err := c.handler.Handler.UpdateMyAccount(username, password, fullName)
+	c.ctx = ctx
+	if err != nil {
+		fmt.Printf("Gagal mengubah data akun: %v\n", err)
+	} else {
+		fmt.Println("Data akun berhasil diubah")
+	}
+}
+
 func (c *cli) MenuPenjual() {
 	var selesaiMenu bool = false
 
@@ -196,6 +223,7 @@ func (c *cli) MenuAkun() {
 		switch inputMenu {
 		case 1:
 		case 2:
+			c.UpdateMyAccount()
 		case 3:
 			selesaiMenu = true
 		}
