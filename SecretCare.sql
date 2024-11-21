@@ -38,7 +38,7 @@ CREATE TABLE cart_items(
 	qty INT NOT NULL,
 	price_at_purchase FLOAT NOT NULL,
 	FOREIGN KEY (cart_id) REFERENCES carts(id),
-	FOREIGN KEY (product_id) REFERENCES products(id)
+	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
 

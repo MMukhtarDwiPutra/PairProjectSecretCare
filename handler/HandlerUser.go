@@ -8,16 +8,31 @@ import (
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
+	"database/sql"
 )
+
 type HandlerUser interface {
 	GetUserByUsername(username string) (*entity.Users, error)
-	DeleteMyAccount(userId int) error
-	UpdateMyAccount(username, password, fullName string) error
+	DeleteMyAccount() (context.Context, error)
+	UpdateMyAccount(username, password, fullName *string) (context.Context, error)
 	ReportBuyerSpending() error
-	ReportSellerSpending() error
+	ReportUserWithHighestSpending() error
 }
 
-func (h *handler) GetUserByUsername(username string) (*entity.Users, error) {
+type handlerUser struct {
+	ctx context.Context
+	db  *sql.DB
+}
+
+// NewHandlerAuth membuat instance baru dari HandlerAuth
+func NewHandlerUser(ctx context.Context, db *sql.DB) *handlerUser {
+	return &handlerUser{
+		ctx: ctx,
+		db:  db,
+	}
+}
+
+func (h *handlerUser) GetUserByUsername(username string) (*entity.Users, error) {
 	var user entity.Users
 	row := h.db.QueryRow("SELECT id, username, full_name, role, password, toko_id FROM users WHERE username = ?", username)
   
@@ -29,7 +44,7 @@ func (h *handler) GetUserByUsername(username string) (*entity.Users, error) {
 	return &user, nil
 }
 
-func (h *handler) UpdateMyAccount(username, password, fullName *string) (context.Context, error) {
+func (h *handlerUser) UpdateMyAccount(username, password, fullName *string) (context.Context, error) {
 	user, ok := utils.GetUserFromContext(h.ctx)
 	if !ok {
 		return h.ctx, fmt.Errorf("user not found in context")
@@ -72,7 +87,7 @@ func (h *handler) UpdateMyAccount(username, password, fullName *string) (context
 	return h.ctx, nil
 }
 
-func (h *handler) DeleteMyAccount() (context.Context, error) {
+func (h *handlerUser) DeleteMyAccount() (context.Context, error) {
 	user, ok := utils.GetUserFromContext(h.ctx)
 	if !ok {
 		return h.ctx, fmt.Errorf("user not found in context")
@@ -87,7 +102,7 @@ func (h *handler) DeleteMyAccount() (context.Context, error) {
 	return h.ctx, nil
 }
 
-func (h *handler) ReportBuyerSpending() error {
+func (h *handlerUser) ReportBuyerSpending() error {
 	user, ok := utils.GetUserFromContext(h.ctx)
 	if !ok {
 		return fmt.Errorf("user not found in context")
@@ -156,7 +171,7 @@ func (h *handler) ReportBuyerSpending() error {
 	return nil
 }
 
-func (h *handler) ReportUserWithHighestSpending() error {
+func (h *handlerUser) ReportUserWithHighestSpending() error {
 	fmt.Println("Report: User with the Highest Spending Based on Price")
 	user, ok := utils.GetUserFromContext(h.ctx)
 	if !ok {

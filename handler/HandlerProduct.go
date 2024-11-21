@@ -2,8 +2,10 @@ package handler
 
 import(
 	_ "github.com/go-sql-driver/mysql"
+	"database/sql"
 	"fmt"
 	"SecretCare/entity"
+	"context"
 )
 
 type HandlerProduct interface{
@@ -14,8 +16,17 @@ type HandlerProduct interface{
 	GetProductReport(tokoID int) []entity.ProductReport
 }
 
+type handlerProduct struct {
+	ctx context.Context
+	db  *sql.DB
+}
 
-func (h *handler) CreateNewProduct(product entity.Product){
+// NewHandlerAuth membuat instance baru dari HandlerAuth
+func NewHandlerProduct(ctx context.Context, db *sql.DB) *handlerProduct {
+	return &handlerProduct{ctx, db}
+}
+
+func (h *handlerProduct) CreateNewProduct(product entity.Product){
 	// Insert into the database
 	_, err := h.db.Exec("INSERT INTO products (nama, harga, stock, toko_id) VALUES (?, ?, ?, ?)", product.Nama, product.Harga, product.Stock, product.TokoID)
 	if err != nil {
@@ -27,7 +38,7 @@ func (h *handler) CreateNewProduct(product entity.Product){
 	fmt.Println("Produk berhasil ditambahkan!")
 }
 
-func (h *handler) GetProductsByTokoID(tokoID int) []entity.Product{
+func (h *handlerProduct) GetProductsByTokoID(tokoID int) []entity.Product{
 	var products []entity.Product
 
 	// Query the database
@@ -59,7 +70,7 @@ func (h *handler) GetProductsByTokoID(tokoID int) []entity.Product{
 	return products
 }
 
-func (h *handler) UpdateStockById(id int, stock int){
+func (h *handlerProduct) UpdateStockById(id int, stock int){
 	_, err := h.db.Exec("UPDATE products SET stock = ? WHERE id = ?", stock, id)
 
 	if err != nil {
@@ -70,7 +81,7 @@ func (h *handler) UpdateStockById(id int, stock int){
 	fmt.Println("Stock product berhasil diupdate!")
 }
 
-func (h *handler) DeleteProductById(id int){
+func (h *handlerProduct) DeleteProductById(id int){
 	_, err := h.db.Exec("DELETE FROM products WHERE id = ?", id)
 
 	if err != nil {
@@ -81,7 +92,7 @@ func (h *handler) DeleteProductById(id int){
 	fmt.Println("Product berhasil dihapus!")
 }
 
-func (h *handler) GetProductReport(tokoID int) []entity.ProductReport{
+func (h *handlerProduct) GetProductReport(tokoID int) []entity.ProductReport{
 	var productReports []entity.ProductReport
 	rows, err := h.db.Query(`SELECT 
 							    products.nama, 
