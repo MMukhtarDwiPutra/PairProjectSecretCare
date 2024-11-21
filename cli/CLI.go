@@ -140,9 +140,17 @@ func (c *cli) UpdateMyAccount() {
 	c.ctx = ctx
 	if err != nil {
 		fmt.Printf("Gagal mengubah data akun: %v\n", err)
-	} else {
-		fmt.Println("Data akun berhasil diubah")
+		return
 	}
+
+	updatedUser, ok := utils.GetUserFromContext(c.ctx)
+	if !ok {
+		fmt.Println("Tidak dapat mengambil data akun yang diperbarui.")
+		return
+	}
+
+	fmt.Println("Data akun berhasil diubah.")
+	fmt.Printf("Informasi akun terbaru:\nUsername: %s\nNama Lengkap: %s\n", updatedUser.Username, updatedUser.FullName)
 }
 
 func (c *cli) MenuPenjual() {
@@ -222,6 +230,9 @@ func (c *cli) MenuAkun() {
 
 		switch inputMenu {
 		case 1:
+			ctx, _ := c.handler.Handler.DeleteMyAccount()
+			c.ctx = ctx
+			c.MenuUtama()
 		case 2:
 			c.UpdateMyAccount()
 		case 3:

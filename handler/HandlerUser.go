@@ -68,3 +68,18 @@ func (h *handler) UpdateMyAccount(username, password, fullName *string) (context
 	}
 	return h.ctx, nil
 }
+
+func (h *handler) DeleteMyAccount() (context.Context, error) {
+	user, ok := utils.GetUserFromContext(h.ctx)
+	if !ok {
+		return h.ctx, fmt.Errorf("user not found in context")
+	}
+
+	_, err := h.db.Exec("DELETE FROM users WHERE id = ?", user.ID)
+	if err != nil {
+		return h.ctx, fmt.Errorf("failed to delete account: %w", err)
+	}
+
+	h.ctx = context.Background()
+	return h.ctx, nil
+}
