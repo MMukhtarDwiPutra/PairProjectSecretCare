@@ -5,12 +5,12 @@ import(
 	"context"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
+    _ "github.com/lib/pq" // PostgreSQL driver
 	"database/sql"
 )
 
 type HandlerToko interface {
-	CreateToko(ctx context.Context, toko entity.Toko) int64
+	CreateToko(ctx context.Context, toko entity.Toko) (int, error)
 }
 
 type handlerToko struct {
@@ -26,21 +26,15 @@ func NewHandlerToko(ctx context.Context, db *sql.DB) *handlerToko {
 	}
 }
 
-func (h *handlerToko) CreateToko(ctx context.Context, toko entity.Toko) int64 {
+func (h *handlerToko) CreateToko(ctx context.Context, toko entity.Toko) (int, error) {
 	// Insert into the database
-	result, err := h.db.Exec("INSERT INTO toko (nama) VALUES (?)", toko.Nama)
+	query := "INSERT INTO toko (nama) VALUES ($1) RETURNING id" // PostgreSQL uses $1 as a placeholder
+	var lastInsertID int64
+	err := h.db.QueryRowContext(ctx, query, toko.Nama).Scan(&lastInsertID)
 	if err != nil {
-		fmt.Println("Error executing query:", err)
-		fmt.Println()
-		return 0
+		return 0, fmt.Errorf("error executing query: %v", err)
 	}
 
-	// Get the last inserted ID (if needed)
-	lastInsertID, err := result.LastInsertId()
-	if err != nil {
-		fmt.Println("Error getting last insert ID:", err)
-		return 0
-	}
 	fmt.Printf("Toko baru berhasil dibuat: %v\n", toko.Nama)
-	return lastInsertID
+	return int(lastInsertID), nil
 }

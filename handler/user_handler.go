@@ -5,10 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-
 	"database/sql"
-
-	_ "github.com/go-sql-driver/mysql"
+    _ "github.com/lib/pq" // PostgreSQL driver
 )
 
 type HandlerUser interface {
@@ -24,7 +22,7 @@ type handlerUser struct {
 	db  *sql.DB
 }
 
-// NewHandlerAuth membuat instance baru dari HandlerAuth
+// NewHandlerUser membuat instance baru dari HandlerUser
 func NewHandlerUser(ctx context.Context, db *sql.DB) *handlerUser {
 	return &handlerUser{
 		ctx: ctx,
@@ -34,7 +32,12 @@ func NewHandlerUser(ctx context.Context, db *sql.DB) *handlerUser {
 
 func (h *handlerUser) GetUserByUsername(username string) (*entity.Users, error) {
 	var user entity.Users
-	row := h.db.QueryRow("SELECT id, username, full_name, role, password, toko_id FROM users WHERE username = ?", username)
+	query := `
+		SELECT id, username, full_name, role, password, toko_id 
+		FROM users 
+		WHERE username = $1
+	`
+	row := h.db.QueryRowContext(h.ctx, query, username)
 
 	if err := row.Scan(&user.ID, &user.Username, &user.FullName, &user.Role, &user.Password, &user.TokoID); err != nil {
 		return nil, fmt.Errorf("error scanning user: %w", err)
@@ -48,23 +51,24 @@ func (h *handlerUser) UpdateMyAccount(userId int, username, password, fullName *
 	params := []interface{}{}
 
 	if username != nil {
-		query += "username = ?, "
+		query += "username = $1, "
 		params = append(params, *username)
 	}
 	if password != nil {
-		query += "password = ?, "
+		query += "password = $2, "
 		params = append(params, *password)
 	}
 	if fullName != nil {
-		query += "full_name = ?, "
+		query += "full_name = $3, "
 		params = append(params, *fullName)
 	}
 
+	// Remove trailing comma and space
 	query = query[:len(query)-2]
-	query += " WHERE id = ?"
+	query += " WHERE id = $4"
 	params = append(params, userId)
 
-	_, err := h.db.Exec(query, params...)
+	_, err := h.db.ExecContext(h.ctx, query, params...)
 
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
@@ -73,7 +77,11 @@ func (h *handlerUser) UpdateMyAccount(userId int, username, password, fullName *
 }
 
 func (h *handlerUser) DeleteMyAccount(userId int) error {
-	_, err := h.db.Exec("DELETE FROM users WHERE id = ?", userId)
+	query := `
+		DELETE FROM users 
+		WHERE id = $1
+	`
+	_, err := h.db.ExecContext(h.ctx, query, userId)
 	if err != nil {
 		return fmt.Errorf("failed to delete account: %w", err)
 	}
@@ -88,8 +96,8 @@ func (h *handlerUser) ReportBuyerSpending(userId int) ([]entity.UserBuyerReport,
 			o.id AS order_id, 
 			u.id AS user_id, 
 			u.full_name, 
-			SUM(ci.qty * ci.price_at_purchase) AS total_spending, 
-			SUM(ci.qty) AS total_qty
+			COALESCE(SUM(ci.qty * ci.price_at_purchase), 0) AS total_spending, 
+			COALESCE(SUM(ci.qty), 0) AS total_qty
 		FROM 
 			users u
 		JOIN 
@@ -101,13 +109,13 @@ func (h *handlerUser) ReportBuyerSpending(userId int) ([]entity.UserBuyerReport,
 		WHERE 
 			u.role = 'Pembeli'
 			AND c.status = 'Checked Out'
-			AND u.id = ? 
+			AND u.id = $1
 		GROUP BY 
 			o.id, u.id
 		ORDER BY 
-			total_spending DESC;
+			total_spending DESC
 	`
-	rows, err := h.db.Query(query, userId)
+	rows, err := h.db.QueryContext(h.ctx, query, userId)
 	if err != nil {
 		log.Printf("Error fetching buyer spending records for user ID %d: %v", userId, err)
 		return nil, err
@@ -124,7 +132,6 @@ func (h *handlerUser) ReportBuyerSpending(userId int) ([]entity.UserBuyerReport,
 		orders = append(orders, orderReport)
 	}
 
-	// Check if any error occurred during row iteration
 	if err = rows.Err(); err != nil {
 		log.Printf("Error iterating buyer spending records for user ID %d: %v", userId, err)
 		return nil, err
@@ -139,7 +146,7 @@ func (h *handlerUser) ReportUserWithHighestSpending(tokoId int) ([]entity.UserRe
 		SELECT 
 			u.id AS user_id, 
 			u.full_name, 
-			SUM(ci.qty * ci.price_at_purchase) AS total_spending
+			COALESCE(SUM(ci.qty * ci.price_at_purchase), 0) AS total_spending
 		FROM 
 			users u
 		JOIN 
@@ -148,17 +155,17 @@ func (h *handlerUser) ReportUserWithHighestSpending(tokoId int) ([]entity.UserRe
 			cart_items ci ON c.id = ci.cart_id
 		WHERE 
 			c.status = 'Checked Out'
-			AND u.toko_id = ?
+			AND u.toko_id = $1
 		GROUP BY 
 			u.id
 		ORDER BY 
 			total_spending DESC
-		LIMIT 10;
+		LIMIT 10
 	`
 
-	rows, err := h.db.Query(query, tokoId)
+	rows, err := h.db.QueryContext(h.ctx, query, tokoId)
 	if err != nil {
-		log.Print("Error fetching records: ", err)
+		log.Printf("Error fetching records: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -167,15 +174,14 @@ func (h *handlerUser) ReportUserWithHighestSpending(tokoId int) ([]entity.UserRe
 		var user entity.UserReportHighestSpending
 		err = rows.Scan(&user.UserId, &user.FullName, &user.TotalSpending)
 		if err != nil {
-			log.Print("Error scanning record: ", err)
+			log.Printf("Error scanning record: %v", err)
 			return nil, err
 		}
-		users = append(users, user) // Add the user to the slice
+		users = append(users, user)
 	}
 
-	// Check for any error encountered during iteration
 	if err = rows.Err(); err != nil {
-		log.Print("Error iterating rows: ", err)
+		log.Printf("Error iterating rows: %v", err)
 		return nil, err
 	}
 
