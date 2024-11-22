@@ -72,7 +72,7 @@ func (c *cli) DeleteMyAccount() {
 	done := make(chan bool)
 	go utils.LoadingSpinner(done)
 
-	c.handler.User.DeleteMyAccount(user.ID)
+	_ = c.handler.User.DeleteMyAccount(user.ID)
 
 	done <- true
 	fmt.Print("\r                \r")
