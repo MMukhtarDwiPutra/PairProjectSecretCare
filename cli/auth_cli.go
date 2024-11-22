@@ -58,7 +58,10 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 			namaToko, _ = inputReader.ReadString('\n')
 			toko.Nama = strings.TrimSpace(namaToko)
 
-			toko.ID = int(c.handler.Toko.CreateToko(context.Background(), toko))
+			tokoID, _ := c.handler.Toko.CreateToko(context.Background(), toko)
+			
+
+			toko.ID = tokoID
 
 			user.TokoID = toko.ID
 			user.Role = "Penjual"

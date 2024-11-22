@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"context"
+    _ "github.com/lib/pq" // PostgreSQL driver
 )
 
 type HandlerCart interface {
@@ -12,7 +13,7 @@ type HandlerCart interface {
 		ProductName string
 		Quantity    int
 		Status      string
-	}, error)	
+	}, error)
 	DeleteAllCartItemsActive(userID int) error
 	DeleteCartItemByID(cartItemID int) error
 	GetActiveCartItems(userID int) ([]struct {
@@ -28,61 +29,53 @@ type handlerCart struct {
 	ctx context.Context
 }
 
-// NewHandlerCart creates a new instance of HandlerCart
 func NewHandlerCart(ctx context.Context, db *sql.DB) HandlerCart {
 	return &handlerCart{db: db, ctx: ctx}
 }
 
 func (h *handlerCart) AddCart(userID int, productID int, qty int, priceAtPurchase float64) error {
-	// Check if there's an active cart for the user
 	var cartID int
-	query := "SELECT id FROM carts WHERE user_id = ? AND status = 'Active'"
+	query := "SELECT id FROM carts WHERE user_id = $1 AND status = 'Active'"
 	err := h.db.QueryRowContext(h.ctx, query, userID).Scan(&cartID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// No active cart, create a new one
 			cartID, err = h.CreateNewCart(userID)
 			if err != nil {
-				return fmt.Errorf("failed to create new cart: %v", err)
+				return fmt.Errorf("failed to create new cart: %w", err)
 			}
 		} else {
-			// Some other database error
-			return fmt.Errorf("error checking active cart: %v", err)
+			return fmt.Errorf("error checking active cart: %w", err)
 		}
 	}
 
-	// Add item to cart
 	err = h.CreateNewCartItems(cartID, productID, qty, priceAtPurchase)
 	if err != nil {
-		return fmt.Errorf("failed to create new cart items: %v", err)
+		return fmt.Errorf("failed to create new cart items: %w", err)
 	}
 
 	fmt.Println("Cart item added successfully")
 	return nil
 }
 
-// CreateNewCart creates a new cart for the user and returns the cart ID
 func (h *handlerCart) CreateNewCart(userID int) (int, error) {
-	result, err := h.db.ExecContext(h.ctx, "INSERT INTO carts (status, user_id) VALUES ('Active', ?)", userID)
+	query := "INSERT INTO carts (status, user_id) VALUES ('Active', $1) RETURNING id"
+	var cartID int
+	err := h.db.QueryRowContext(h.ctx, query, userID).Scan(&cartID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create cart: %v", err)
+		return 0, fmt.Errorf("failed to create cart: %w", err)
 	}
-
-	cartID, err := result.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("failed to get last insert id: %v", err)
-	}
-
-	return int(cartID), nil
+	return cartID, nil
 }
 
-// CreateNewCartItems adds a new item to the cart
 func (h *handlerCart) CreateNewCartItems(cartID, productID, qty int, priceAtPurchase float64) error {
-	_, err := h.db.ExecContext(h.ctx, "INSERT INTO cart_items (cart_id, product_id, qty, price_at_purchase) VALUES (?, ?, ?, ?)",
-		cartID, productID, qty, priceAtPurchase)
+	query := `
+		INSERT INTO cart_items (cart_id, product_id, qty, price_at_purchase) 
+		VALUES ($1, $2, $3, $4)
+	`
+	_, err := h.db.ExecContext(h.ctx, query, cartID, productID, qty, priceAtPurchase)
 	if err != nil {
-		return fmt.Errorf("failed to add item to cart: %v", err)
+		return fmt.Errorf("failed to add item to cart: %w", err)
 	}
 	return nil
 }
@@ -97,12 +90,12 @@ func (h *handlerCart) ShowCart(userID int) ([]struct {
 		FROM carts c
 		JOIN cart_items ci ON c.id = ci.cart_id
 		JOIN products p ON ci.product_id = p.id
-		WHERE c.user_id = ?
+		WHERE c.user_id = $1
 	`
 
 	rows, err := h.db.QueryContext(h.ctx, query, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch cart data: %v", err)
+		return nil, fmt.Errorf("failed to fetch cart data: %w", err)
 	}
 	defer rows.Close()
 
@@ -118,12 +111,10 @@ func (h *handlerCart) ShowCart(userID int) ([]struct {
 			Quantity    int
 			Status      string
 		}
-
 		err := rows.Scan(&item.ProductName, &item.Quantity, &item.Status)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %v", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
-
 		cartItems = append(cartItems, item)
 	}
 
@@ -131,29 +122,27 @@ func (h *handlerCart) ShowCart(userID int) ([]struct {
 }
 
 func (h *handlerCart) DeleteAllCartItemsActive(userID int) error {
-	// Get the active cart ID for the user
 	var cartID int
 	query := `
 		SELECT id
 		FROM carts
-		WHERE user_id = ? AND status = 'Active'
+		WHERE user_id = $1 AND status = 'Active'
 	`
 	err := h.db.QueryRowContext(h.ctx, query, userID).Scan(&cartID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("no active cart found for user ID %d", userID)
 		}
-		return fmt.Errorf("failed to retrieve active cart: %v", err)
+		return fmt.Errorf("failed to retrieve active cart: %w", err)
 	}
 
-	// Delete all items in the active cart
 	deleteQuery := `
 		DELETE FROM cart_items
-		WHERE cart_id = ?
+		WHERE cart_id = $1
 	`
 	_, err = h.db.ExecContext(h.ctx, deleteQuery, cartID)
 	if err != nil {
-		return fmt.Errorf("failed to delete cart items: %v", err)
+		return fmt.Errorf("failed to delete cart items: %w", err)
 	}
 
 	return nil
@@ -162,11 +151,11 @@ func (h *handlerCart) DeleteAllCartItemsActive(userID int) error {
 func (h *handlerCart) DeleteCartItemByID(cartItemID int) error {
 	query := `
 		DELETE FROM cart_items
-		WHERE id = ?
+		WHERE id = $1
 	`
 	_, err := h.db.ExecContext(h.ctx, query, cartItemID)
 	if err != nil {
-		return fmt.Errorf("failed to delete cart item with ID %d: %v", cartItemID, err)
+		return fmt.Errorf("failed to delete cart item with ID %d: %w", cartItemID, err)
 	}
 
 	return nil
@@ -182,13 +171,12 @@ func (h *handlerCart) GetActiveCartItems(userID int) ([]struct {
 		FROM cart_items ci
 		JOIN products p ON ci.product_id = p.id
 		JOIN carts c ON ci.cart_id = c.id
-		WHERE c.user_id = ? AND c.status = 'Active'
-		`
+		WHERE c.user_id = $1 AND c.status = 'Active'
+	`
 
 	rows, err := h.db.QueryContext(h.ctx, query, userID)
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch cart items: %v", err)
+		return nil, fmt.Errorf("failed to fetch cart items: %w", err)
 	}
 	defer rows.Close()
 
@@ -206,7 +194,7 @@ func (h *handlerCart) GetActiveCartItems(userID int) ([]struct {
 		}
 		err := rows.Scan(&item.ID, &item.ProductName, &item.Quantity)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %v", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		cartItems = append(cartItems, item)
 	}
@@ -215,19 +203,18 @@ func (h *handlerCart) GetActiveCartItems(userID int) ([]struct {
 }
 
 func (h *handlerCart) UpdateQuantityCart(cartItemID int, newQuantity int) error {
-	// Ensure new quantity is greater than zero
 	if newQuantity <= 0 {
 		return fmt.Errorf("quantity must be greater than zero")
 	}
 
 	query := `
 		UPDATE cart_items
-		SET qty = ?
-		WHERE id = ?
+		SET qty = $1
+		WHERE id = $2
 	`
 	_, err := h.db.ExecContext(h.ctx, query, newQuantity, cartItemID)
 	if err != nil {
-		return fmt.Errorf("failed to update cart item quantity: %v", err)
+		return fmt.Errorf("failed to update cart item quantity: %w", err)
 	}
 
 	return nil

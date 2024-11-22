@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-    // Replace with your Supabase connection string
     connString := "postgresql://postgres.tsbsgibxzmhmjoaifosb:AnakGanteng@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 
     db := config.InitDatabase(connString)
