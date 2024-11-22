@@ -404,6 +404,31 @@ func (c *cli) MenuPembeli() {
 					}
 				}	
 		case 5:
+			// Update Cart functionality
+			user, _ := utils.GetUserFromContext(c.ctx)
+		
+			// Fetch active cart items for the user
+			cartItems, _ := c.handler.Cart.GetActiveCartItems(user.ID)
+		
+			if len(cartItems) == 0 {
+				fmt.Println("Tidak ada item di keranjang.")
+				continue
+			}
+		
+			// Print the cart items
+			fmt.Println("ID\tNama Barang\tQty")
+			for _, item := range cartItems {
+				fmt.Printf("%d\t%s\t%d\n", item.ID, item.ProductName, item.Quantity)
+			}
+		
+			// Get the cart item ID to update
+			cartItemID := helpers.InputAndHandlingNumber("Masukan ID item yang ingin diupdate: ")
+		
+			// Get the new quantity
+			newQuantity := helpers.InputAndHandlingNumber("Masukan jumlah baru: ")
+		
+			// Update the cart item quantity
+			c.handler.Cart.UpdateQuantityCart(cartItemID, newQuantity)
 		case 6:
 			c.MenuAkun()
 		case 7:

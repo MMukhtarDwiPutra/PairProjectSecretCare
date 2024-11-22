@@ -19,6 +19,7 @@ type HandlerCart interface {
 		ProductName string
 		Quantity   int
 	}, error)
+	UpdateQuantityCart(cartItemID int, newQuantity int) error
 }
 
 type handlerCart struct {
@@ -207,4 +208,23 @@ func (h *handlerCart) GetActiveCartItems(userID int) ([]struct {
 	}
 
 	return cartItems, nil
+}
+
+func (h *handlerCart) UpdateQuantityCart(cartItemID int, newQuantity int) error {
+	// Ensure new quantity is greater than zero
+	if newQuantity <= 0 {
+		return fmt.Errorf("quantity must be greater than zero")
+	}
+
+	query := `
+		UPDATE cart_items
+		SET qty = ?
+		WHERE id = ?
+	`
+	_, err := h.db.Exec(query, newQuantity, cartItemID)
+	if err != nil {
+		return fmt.Errorf("failed to update cart item quantity: %v", err)
+	}
+
+	return nil
 }
