@@ -349,6 +349,60 @@ func (c *cli) MenuPembeli() {
 			
 			c.handler.Order.Checkout(user.ID)
 		case 4:
+			user, _ := utils.GetUserFromContext(c.ctx)
+			
+			// delete cart loop
+			DeleteCartLoop: 
+				for {
+					fmt.Println("Pilih opsi:")
+					fmt.Println("1. Delete All Cart Items")
+					fmt.Println("2. Delete Satu Satu Barang")
+					fmt.Println("3. Back")
+					inputMenu := helpers.InputAndHandlingNumber("Masukan nomor menu yang ingin dipilih: ")
+
+					switch inputMenu {
+						case 1:
+							// Delete all items
+							err := c.handler.Cart.DeleteAllCartItemsActive(user.ID)
+							if err != nil {
+								fmt.Printf("Gagal menghapus semua item di keranjang: %v\n", err)
+							} else {
+								fmt.Println("Berhasil menghapus semua item di keranjang.")
+							}
+						case 2:
+							// Delete one item
+							cartItems, err := c.handler.Cart.GetActiveCartItems(user.ID)
+							if err != nil {
+								fmt.Printf("Gagal mendapatkan item di keranjang: %v\n", err)
+								continue
+							}
+
+							if len(cartItems) == 0 {
+								fmt.Println("Tidak ada item di keranjang.")
+								continue
+							}
+
+							// Print the cart items
+							fmt.Println("ID\tNama Barang\tQty")
+							for _, item := range cartItems {
+								fmt.Printf("%d\t%s\t%d\n", item.ID, item.ProductName, item.Quantity)
+							}
+
+							// Get the cart item ID to delete
+							cartItemID := helpers.InputAndHandlingNumber("Masukan ID item yang ingin dihapus: ")
+							err = c.handler.Cart.DeleteCartItemByID(cartItemID)
+							if err != nil {
+								fmt.Printf("Gagal menghapus item dengan ID %d: %v\n", cartItemID, err)
+							} else {
+								fmt.Println("Berhasil menghapus item dari keranjang.")
+							}
+						case 3:
+							// Back to previous menu
+							break DeleteCartLoop
+						default:
+							fmt.Println("Masukan nomor menu yang valid.")
+					}
+				}	
 		case 5:
 		case 6:
 			c.MenuAkun()
