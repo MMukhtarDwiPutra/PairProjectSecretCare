@@ -3,10 +3,11 @@ package handler
 import (
 	"SecretCare/entity"
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
-	"database/sql"
-    _ "github.com/lib/pq" // PostgreSQL driver
+
+	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 type HandlerUser interface {
@@ -49,27 +50,29 @@ func (h *handlerUser) GetUserByUsername(username string) (*entity.Users, error) 
 func (h *handlerUser) UpdateMyAccount(userId int, username, password, fullName *string) error {
 	query := "UPDATE users SET "
 	params := []interface{}{}
+	placeholderIdx := 1
 
 	if username != nil {
-		query += "username = $1, "
+		query += fmt.Sprintf("username = $%d, ", placeholderIdx)
 		params = append(params, *username)
+		placeholderIdx++
 	}
 	if password != nil {
-		query += "password = $2, "
+		query += fmt.Sprintf("password = $%d, ", placeholderIdx)
 		params = append(params, *password)
+		placeholderIdx++
 	}
 	if fullName != nil {
-		query += "full_name = $3, "
+		query += fmt.Sprintf("full_name = $%d, ", placeholderIdx)
 		params = append(params, *fullName)
+		placeholderIdx++
 	}
 
-	// Remove trailing comma and space
 	query = query[:len(query)-2]
-	query += " WHERE id = $4"
+	query += fmt.Sprintf(" WHERE id = $%d", placeholderIdx)
 	params = append(params, userId)
 
 	_, err := h.db.ExecContext(h.ctx, query, params...)
-
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
@@ -77,13 +80,42 @@ func (h *handlerUser) UpdateMyAccount(userId int, username, password, fullName *
 }
 
 func (h *handlerUser) DeleteMyAccount(userId int) error {
-	query := `
-		DELETE FROM users 
-		WHERE id = $1
-	`
-	_, err := h.db.ExecContext(h.ctx, query, userId)
+	tx, err := h.db.BeginTx(h.ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to delete account: %w", err)
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	// Step 1: Delete records from orders
+	_, err = tx.ExecContext(h.ctx, "DELETE FROM orders WHERE cart_id IN (SELECT id FROM carts WHERE user_id = $1)", userId)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete related orders: %w", err)
+	}
+
+	// Step 2: Delete records from cart_items
+	_, err = tx.ExecContext(h.ctx, "DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE user_id = $1)", userId)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete related cart items: %w", err)
+	}
+
+	// Step 3: Delete records from carts
+	_, err = tx.ExecContext(h.ctx, "DELETE FROM carts WHERE user_id = $1", userId)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete related carts: %w", err)
+	}
+
+	// Step 4: Delete the user record
+	_, err = tx.ExecContext(h.ctx, "DELETE FROM users WHERE id = $1", userId)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete user account: %w", err)
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
