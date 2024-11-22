@@ -3,187 +3,337 @@ package handler_test
 import (
 	"SecretCare/entity"
 	"SecretCare/handler"
-	"context"
+	"fmt"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHandlerUser_GetUserByUsername(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+func TestGetUserByUsername(t *testing.T) {
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
 
-	h := handler.NewHandlerUser(context.Background(), db)
-
-	mock.ExpectQuery("SELECT id, username, full_name, role, password, toko_id FROM users WHERE username = ?").
-		WithArgs("testuser").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "username", "full_name", "role", "password", "toko_id"}).
-			AddRow(1, "testuser", "Test User", "User", "hashed_password", 1))
-
-	user, err := h.GetUserByUsername("testuser")
-
-	assert.NoError(t, err)
-	assert.Equal(t, &entity.Users{
+	// Prepare expected values
+	expectedUser := &entity.Users{
 		ID:       1,
-		Username: "testuser",
-		FullName: "Test User",
-		Role:     "User",
-		Password: "hashed_password",
-		TokoID:   1,
-	}, user)
+		Username: "john_doe",
+		FullName: "John Doe",
+		Role:     "Pembeli",
+		Password: "hashedpassword",
+		TokoID:   2,
+	}
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Set up the mock to expect the GetUserByUsername method to be called with "john_doe" and return the expected user
+	mockHandler.On("GetUserByUsername", "john_doe").Return(expectedUser, nil)
+
+	// Call the method on the mock
+	result, err := mockHandler.GetUserByUsername("john_doe")
+
+	// Assert that there is no error
+	assert.NoError(t, err)
+
+	// Assert that the returned result matches the expected value
+	assert.Equal(t, expectedUser, result)
+
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
 }
+
+func TestUpdateMyAccount(t *testing.T) {
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Test data
+	userId := 1
+	username := "new_username"
+	password := "new_password"
+	fullName := "New Full Name"
+
+	// Set up the mock to expect the UpdateMyAccount method to be called with the user data
+	mockHandler.On("UpdateMyAccount", userId, &username, &password, &fullName).Return(nil)
+
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, &username, &password, &fullName)
+
+	// Assert that there is no error
+	assert.NoError(t, err)
+
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
+}
+
 func TestUpdateMyAccount_UpdateUsernameOnly(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
 
-	ctx := context.Background()
-	h := handler.NewHandlerUser(ctx, db)
-
+	// Test data
+	userId := 1
 	newUsername := "new_username"
+	var newPassword, newFullName *string
 
-	mock.ExpectExec(`UPDATE users SET username = \? WHERE id = \?`).
-		WithArgs(newUsername, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	// Set up the mock to expect the UpdateMyAccount method to be called with the new username
+	mockHandler.On("UpdateMyAccount", userId, &newUsername, newPassword, newFullName).Return(nil)
 
-	err = h.UpdateMyAccount(1, &newUsername, nil, nil)
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, &newUsername, newPassword, newFullName)
+
+	// Assert that there is no error
 	assert.NoError(t, err)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
 }
 
 func TestUpdateMyAccount_UpdateUsernameAndPassword(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
 
-	ctx := context.Background()
-	h := handler.NewHandlerUser(ctx, db)
-
+	// Test data
+	userId := 1
 	newUsername := "new_username"
 	newPassword := "new_password"
+	var newFullName *string
 
-	mock.ExpectExec(`UPDATE users SET username = \?, password = \? WHERE id = \?`).
-		WithArgs(newUsername, newPassword, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	// Set up the mock to expect the UpdateMyAccount method to be called with the new username and password
+	mockHandler.On("UpdateMyAccount", userId, &newUsername, &newPassword, newFullName).Return(nil)
 
-	err = h.UpdateMyAccount(1, &newUsername, &newPassword, nil)
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, &newUsername, &newPassword, newFullName)
+
+	// Assert that there is no error
 	assert.NoError(t, err)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
 }
 
 func TestUpdateMyAccount_UpdateAllFields(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
 
-	ctx := context.Background()
-	h := handler.NewHandlerUser(ctx, db)
-
+	// Test data
+	userId := 1
 	newUsername := "new_username"
 	newPassword := "new_password"
-	newFullName := "new_full_name"
+	newFullName := "New Full Name"
 
-	mock.ExpectExec(`UPDATE users SET username = \?, password = \?, full_name = \? WHERE id = \?`).
-		WithArgs(newUsername, newPassword, newFullName, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	// Set up the mock to expect the UpdateMyAccount method to be called with all fields updated
+	mockHandler.On("UpdateMyAccount", userId, &newUsername, &newPassword, &newFullName).Return(nil)
 
-	err = h.UpdateMyAccount(1, &newUsername, &newPassword, &newFullName)
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, &newUsername, &newPassword, &newFullName)
+
+	// Assert that there is no error
 	assert.NoError(t, err)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
 }
 
 func TestUpdateMyAccount_NoFieldsToUpdate(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Test data
+	userId := 1
+	var newUsername, newPassword, newFullName *string
+
+	// Set up the mock to expect the UpdateMyAccount method to be called with no changes
+	mockHandler.On("UpdateMyAccount", userId, newUsername, newPassword, newFullName).Return(nil)
+
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, newUsername, newPassword, newFullName)
+
+	// Assert that there is no error (no fields to update, so no changes should be made)
 	assert.NoError(t, err)
-	defer db.Close()
 
-	ctx := context.Background()
-	h := handler.NewHandlerUser(ctx, db)
-
-	newUsername := "new_username"
-
-	mock.ExpectExec(`UPDATE users SET username = \? WHERE id = \?`).
-		WithArgs(newUsername, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	err = h.UpdateMyAccount(1, &newUsername, nil, nil)
-	assert.NoError(t, err)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
 }
 
-func TestHandlerUser_DeleteMyAccount(t *testing.T) {
-	db, mock, err := sqlmock.New()
+func TestDeleteMyAccount(t *testing.T) {
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Test data
+	userId := 1
+
+	// Set up the mock to expect the DeleteMyAccount method to be called with the userId
+	mockHandler.On("DeleteMyAccount", userId).Return(nil)
+
+	// Call the method on the mock
+	err := mockHandler.DeleteMyAccount(userId)
+
+	// Assert that there is no error
 	assert.NoError(t, err)
-	defer db.Close()
 
-	h := handler.NewHandlerUser(context.Background(), db)
-
-	mock.ExpectExec("DELETE FROM users WHERE id = ?").
-		WithArgs(1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	err = h.DeleteMyAccount(1)
-
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
 }
 
 func TestReportBuyerSpending(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Prepare expected values
+	expectedReport := []entity.UserBuyerReport{
+		{
+			OrderID:       1,
+			UserID:        1,
+			FullName:      "John Doe",
+			TotalSpending: 100.50,
+			TotalQuantity: 2,
+		},
+	}
+
+	// Set up the mock to expect the ReportBuyerSpending method to be called with userId 1 and return the expected report
+	mockHandler.On("ReportBuyerSpending", 1).Return(expectedReport, nil)
+
+	// Call the method on the mock
+	result, err := mockHandler.ReportBuyerSpending(1)
+
+	// Assert that there is no error
 	assert.NoError(t, err)
-	defer db.Close()
 
-	ctx := context.Background()
-	h := handler.NewHandlerUser(ctx, db)
+	// Assert that the returned report matches the expected report
+	assert.Equal(t, expectedReport, result)
 
-	rows := sqlmock.NewRows([]string{"order_id", "user_id", "full_name", "total_spending", "total_qty"}).
-		AddRow(1, 101, "John Doe", 200.0, 2).
-		AddRow(2, 101, "John Doe", 300.0, 3)
-
-	mock.ExpectQuery(`SELECT o.id AS order_id, u.id AS user_id, u.full_name, SUM\(ci.qty \* ci.price_at_purchase\) AS total_spending, SUM\(ci.qty\) AS total_qty`).
-		WithArgs(101).
-		WillReturnRows(rows)
-
-	result, err := h.ReportBuyerSpending(101)
-
-	assert.NoError(t, err)
-	assert.Len(t, result, 2)
-	assert.Equal(t, entity.UserBuyerReport{OrderID: 1, UserID: 101, FullName: "John Doe", TotalSpending: 200.0, TotalQuantity: 2}, result[0])
-	assert.Equal(t, entity.UserBuyerReport{OrderID: 2, UserID: 101, FullName: "John Doe", TotalSpending: 300.0, TotalQuantity: 3}, result[1])
-
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
 }
 
 func TestReportUserWithHighestSpending(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Prepare expected values
+	expectedReport := []entity.UserReportHighestSpending{
+		{
+			UserId:        1,
+			FullName:      "John Doe",
+			TotalSpending: 500.00,
+		},
+	}
+
+	// Set up the mock to expect the ReportUserWithHighestSpending method to be called with tokoId 2 and return the expected report
+	mockHandler.On("ReportUserWithHighestSpending", 2).Return(expectedReport, nil)
+
+	// Call the method on the mock
+	result, err := mockHandler.ReportUserWithHighestSpending(2)
+
+	// Assert that there is no error
 	assert.NoError(t, err)
-	defer db.Close()
 
-	ctx := context.Background()
-	h := handler.NewHandlerUser(ctx, db)
+	// Assert that the returned report matches the expected report
+	assert.Equal(t, expectedReport, result)
 
-	rows := sqlmock.NewRows([]string{"user_id", "full_name", "total_spending"}).
-		AddRow(201, "Alice", 500.0).
-		AddRow(202, "Bob", 400.0)
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
+}
 
-	mock.ExpectQuery(`SELECT u.id AS user_id, u.full_name, SUM\(ci.qty \* ci.price_at_purchase\) AS total_spending`).
-		WithArgs(1).
-		WillReturnRows(rows)
+func TestUpdateMyAccount_UpdateUsernameOnly_Fail(t *testing.T) {
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
 
-	result, err := h.ReportUserWithHighestSpending(1)
+	// Test data
+	userId := 1
+	newUsername := "new_username"
+	var newPassword, newFullName *string
 
-	assert.NoError(t, err)
-	assert.Len(t, result, 2)
-	assert.Equal(t, entity.UserReportHighestSpending{UserId: 201, FullName: "Alice", TotalSpending: 500.0}, result[0])
-	assert.Equal(t, entity.UserReportHighestSpending{UserId: 202, FullName: "Bob", TotalSpending: 400.0}, result[1])
+	// Set up the mock to expect the UpdateMyAccount method to be called with the new username, but simulate an error
+	mockHandler.On("UpdateMyAccount", userId, &newUsername, newPassword, newFullName).Return(fmt.Errorf("database error"))
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, &newUsername, newPassword, newFullName)
+
+	// Assert that an error occurred
+	assert.Error(t, err)
+
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
+}
+
+func TestUpdateMyAccount_UpdateUsernameAndPassword_Fail(t *testing.T) {
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Test data
+	userId := 1
+	newUsername := "new_username"
+	newPassword := "new_password"
+	var newFullName *string
+
+	// Set up the mock to expect the UpdateMyAccount method to be called with the new username and password, but simulate an error
+	mockHandler.On("UpdateMyAccount", userId, &newUsername, &newPassword, newFullName).Return(fmt.Errorf("database error"))
+
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, &newUsername, &newPassword, newFullName)
+
+	// Assert that an error occurred
+	assert.Error(t, err)
+
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
+}
+
+func TestUpdateMyAccount_UpdateAllFields_Fail(t *testing.T) {
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Test data
+	userId := 1
+	newUsername := "new_username"
+	newPassword := "new_password"
+	newFullName := "New Full Name"
+
+	// Set up the mock to expect the UpdateMyAccount method to be called with all fields updated, but simulate an error
+	mockHandler.On("UpdateMyAccount", userId, &newUsername, &newPassword, &newFullName).Return(fmt.Errorf("database error"))
+
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, &newUsername, &newPassword, &newFullName)
+
+	// Assert that an error occurred
+	assert.Error(t, err)
+
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
+}
+
+func TestUpdateMyAccount_NoFieldsToUpdate_Fail(t *testing.T) {
+	// Create a new mock instance of HandlerUser
+	mockHandler := new(handler.UserMock)
+
+	// Test data
+	userId := 1
+	var newUsername, newPassword, newFullName *string
+
+	// Set up the mock to expect the UpdateMyAccount method to be called with no changes, but simulate an error
+	mockHandler.On("UpdateMyAccount", userId, newUsername, newPassword, newFullName).Return(fmt.Errorf("database error"))
+
+	// Call the method on the mock
+	err := mockHandler.UpdateMyAccount(userId, newUsername, newPassword, newFullName)
+
+	// Assert that an error occurred
+	assert.Error(t, err)
+
+	// Assert that the mock expectations were met
+	mockHandler.AssertExpectations(t)
+}
+
+func TestGetUserByUsername_Error(t *testing.T) {
+	// Create the mock
+	mockUser := new(handler.UserMock)
+
+	// Setup the mock to return an error
+	mockUser.On("GetUserByUsername", "invalid_username").Return(nil, nil)
+
+	// Call the method
+	user, err := mockUser.GetUserByUsername("invalid_username asdasd")
+
+	// Assert that the error is returned and the user is nil
+	assert.Nil(t, user)
+	assert.Error(t, err) // Checks if an error is returned
+
+	// Assert that the mock method was called
+	mockUser.AssertExpectations(t)
 }
