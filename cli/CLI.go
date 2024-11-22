@@ -329,8 +329,20 @@ func (c *cli) MenuPembeli() {
 
 			c.handler.Cart.AddCart(user.ID, productID, qty, price)
 		case 2:
-
-
+			// show Cart functionality
+			user, _ := utils.GetUserFromContext(c.ctx)
+		
+			// Call the ShowCart function
+			cartItems, _ := c.handler.Cart.ShowCart(user.ID)
+		
+			if len(cartItems) == 0 {
+				fmt.Println("Keranjang Anda kosong.")
+			} else {
+				fmt.Println("Nama Product\tJumlah\tStatus Cart")
+				for _, item := range cartItems {
+					fmt.Printf("%s\t%d\t%s\n", item.ProductName, item.Quantity, item.Status)
+				}
+			}	
 		case 3:
 		case 4:
 		case 5:
