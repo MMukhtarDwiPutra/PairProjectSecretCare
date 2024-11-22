@@ -13,7 +13,7 @@ import (
 
 type HandlerAuth interface {
 	RegisterUser(ctx context.Context, user entity.Users)
-	Login(username, password string) (bool, string, context.Context)
+	Login(username, password string) (bool, string, context.Context, error)
 }
 
 type handlerAuth struct {
@@ -31,11 +31,10 @@ func NewHandlerAuth(ctx context.Context, db *sql.DB) HandlerAuth {
 	}
 }
 
-func (h *handlerAuth) Login(username, password string) (bool, string, context.Context) {
+func (h *handlerAuth) Login(username, password string) (bool, string, context.Context, error) {
 	user, err := h.handlerUser.GetUserByUsername(username)
 	if err != nil {
-		fmt.Println("Error retrieving user:", err)
-		return false, "", h.ctx
+		return false, "", h.ctx, fmt.Errorf("Error retrieving user:", err)
 	}
 
 	successLogin := helpers.CheckPasswordHash(password, user.Password)
@@ -45,8 +44,7 @@ func (h *handlerAuth) Login(username, password string) (bool, string, context.Co
 		h.ctx = utils.SetUserInContext(h.ctx, user) // Set user in the context
 	}
 
-	fmt.Println("")
-	return successLogin, user.Role, h.ctx
+	return successLogin, user.Role, h.ctx, nil
 }
 
 func (h *handlerAuth) RegisterUser(ctx context.Context, user entity.Users) {
