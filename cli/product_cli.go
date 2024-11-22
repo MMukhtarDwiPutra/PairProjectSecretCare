@@ -5,7 +5,6 @@ import(
 	"SecretCare/entity"
 	"SecretCare/utils"
 	"SecretCare/helpers"
-	"strconv"
 	"os" //Diimpor untuk bisa scan multiple string dari layar cli di program golang
 	"bufio" //Diimpor untuk bisa scan multiple string dari layar cli di program golang
 	"strings"
@@ -27,16 +26,10 @@ func (c *cli) MenuCreateNewProduct() {
 	product.Nama = strings.TrimSpace(product.Nama)
 
 	// Input Username
-	fmt.Print("Masukan harga: ")
-	hargaString, _ := inputReader.ReadString('\n')
-	hargaString = strings.TrimSpace(hargaString)
-	product.Harga, _ = strconv.ParseFloat(hargaString, 64)
+	product.Harga = float64(helpers.InputAndHandlingNumber("Masukan harga: "))
 
 	// Input Username
-	fmt.Print("Masukan stock: ")
-	stockString, _ := inputReader.ReadString('\n')
-	stockString = strings.TrimSpace(stockString)
-	product.Stock, _ = strconv.Atoi(stockString)
+	product.Stock = helpers.InputAndHandlingNumber("Masukan stock: ")
 
 	product.TokoID = user.TokoID
 	_ = c.handler.Product.CreateNewProduct(product)
@@ -51,7 +44,12 @@ func (c *cli) MenuProductReport() {
 	fmt.Println("==========================================================")
 	fmt.Printf("%-25s %-10v %s\n", "Nama Produk", "Penjualan", "Pendapatan") // Header with fixed column widths
 
+	done := make(chan bool)
+	go utils.LoadingSpinner(done)
+
 	productReports := c.handler.Product.GetProductReport(user.TokoID)
+	done <- true
+	fmt.Print("\r                \r")
 
 	for _, productReport := range productReports {
 		fmt.Printf("%-25s %-10v %.2f\n", productReport.Nama, productReport.TotalPenjualan, productReport.TotalPendapatan) // Header with fixed column widths
@@ -67,18 +65,21 @@ func (c *cli) MenuUpdateStock() {
 	fmt.Println("=============================")
 	fmt.Println("Update Stock dari Produk")
 	fmt.Println("=============================")
-	fmt.Printf("%-5s %-25s %s\n", "ID", "Nama Produk", "Stock") // Header with fixed column widths
+	fmt.Printf("%-5v %-25s %-5v %-5v\n", "ID", "Nama Produk", "Stock", "Harga") // Header with fixed column widths
 
 	for _, product := range products {
 		// Print each product with aligned columns
-		fmt.Printf("%-5d %-25s %d\n", product.ID, product.Nama, product.Stock)
+		fmt.Printf("%-5v %-25s %-5v %-5v\n", product.ID, product.Nama, product.Stock, product.Harga)
 	}
 
-	fmt.Println("0. Untuk kembali")
+	fmt.Println("\n0. Untuk kembali")
 	produkID := helpers.InputAndHandlingNumber("Masukan ID product yang ingin diupdate: ")
 	if produkID == 0 {
 		return
 	}
+
+	fmt.Println("Update Stock %v")
+	fmt.Println("")
 
 	stock := helpers.InputAndHandlingNumber("Masukan jumlah stock terbaru: ")
 
@@ -98,7 +99,7 @@ func (c *cli) MenuDeleteProduct() {
 	for _, product := range products {
 		fmt.Printf("%v\t %v\n", product.ID, product.Nama)
 	}
-	fmt.Println("0. Untuk kembali")
+	fmt.Println("\n0. Untuk kembali")
 	produkID := helpers.InputAndHandlingNumber("Masukan ID product yang ingin dihapus: ")
 	if produkID == 0 {
 		return

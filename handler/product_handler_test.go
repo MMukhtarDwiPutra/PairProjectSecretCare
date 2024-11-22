@@ -299,6 +299,56 @@ package handler
 //     assert.Empty(t, result)
 
     // Verifikasi bahwa mock repository telah dipanggil dengan parameter yang benar
-//     productMock.AssertCalled(t, "GetProductReport", 5)
-//     productMock.AssertExpectations(t)
-// }
+    productMock.AssertCalled(t, "GetProductReport", 5)
+    productMock.AssertExpectations(t)
+}
+
+// TestGetProductReport_NoProductsFound menguji skenario test get all product success
+func TestGetAllProducts_Success(t *testing.T) {
+    // Buat mock untuk ProductMock
+    productMock := &ProductMock{}
+
+    // Data yang diharapkan
+    expectedProducts := []entity.Product{
+        {ID: 1, Nama: "Keyboard", Harga: 200, Stock: 20, TokoID: 3},
+        {ID: 2, Nama: "Mouse", Harga: 50, Stock: 100, TokoID: 3},
+    }
+    expectedError := error(nil) // Tidak ada error dalam kasus ini
+
+    // Tentukan perilaku mock
+    productMock.On("GetAllProducts").Return(expectedProducts, expectedError).Once()
+
+    // Panggil fungsi yang ingin diuji
+    products, err := productMock.GetAllProducts()
+
+    // Verifikasi hasil
+    assert.NoError(t, err, "Seharusnya tidak ada error")
+    assert.Equal(t, expectedProducts, products, "Hasil produk harus sesuai dengan yang diharapkan")
+
+    // Verifikasi ekspektasi mock
+    productMock.AssertExpectations(t)
+}
+
+func TestGetAllProducts_Fail(t *testing.T) {
+    // Buat mock untuk ProductMock
+    productMock := &ProductMock{}
+
+    // Tentukan produk kosong sebagai hasil yang diharapkan
+    expectedProducts := []entity.Product{}
+    expectedError := fmt.Errorf("produk tidak ditemukan") // Error yang diharapkan
+
+    // Tentukan perilaku mock
+    productMock.On("GetAllProducts").Return(expectedProducts, expectedError).Once()
+
+    // Panggil fungsi yang ingin diuji
+    products, err := productMock.GetAllProducts()
+
+    // Verifikasi hasil
+    assert.EqualError(t, err, expectedError.Error(), "Seharusnya ada error: produk tidak ditemukan")
+    assert.Equal(t, expectedProducts, products, "Hasil produk harus sesuai dengan yang diharapkan")
+
+    // Verifikasi ekspektasi mock
+    productMock.AssertExpectations(t)
+}
+
+
