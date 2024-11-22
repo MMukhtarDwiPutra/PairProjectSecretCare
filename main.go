@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	db := config.InitDatabase("root:@tcp(127.0.0.1:3306)/SecretCare2")
+	db := config.InitDatabase("root:Obie230110!@tcp(127.0.0.1:3306)/SecretCare")
 	defer db.Close()
 
 	var ctx context.Context = context.Background()

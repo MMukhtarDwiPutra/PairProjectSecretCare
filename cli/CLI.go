@@ -294,6 +294,7 @@ func (c *cli) MenuPenjual() {
 
 func (c *cli) MenuPembeli() {
 	var selesaiMenu bool = false
+	inputReader := bufio.NewReader(os.Stdin)
 
 	for !selesaiMenu {
 		fmt.Println("User Pembeli Menu")
@@ -309,7 +310,27 @@ func (c *cli) MenuPembeli() {
 
 		switch inputMenu {
 		case 1:
+			// add cart functionality
+			user, _ := utils.GetUserFromContext(c.ctx)
+
+			// masukan ID product
+			fmt.Print("Masukan ID produk: ")
+			productIDStr, _ := inputReader.ReadString('\n')
+			productID, _ := strconv.Atoi(strings.TrimSpace(productIDStr))
+
+			// masukan jumlah
+			fmt.Print("Masukan jumlah: ")
+			qtyStr, _ := inputReader.ReadString('\n')
+			qty, _ := strconv.Atoi(strings.TrimSpace(qtyStr))
+
+			fmt.Print("Masukan harga pembelian: ")
+			priceStr, _ := inputReader.ReadString('\n')
+			price, _ := strconv.ParseFloat(strings.TrimSpace(priceStr), 64)
+
+			c.handler.Cart.AddCart(user.ID, productID, qty, price)
 		case 2:
+
+
 		case 3:
 		case 4:
 		case 5:
