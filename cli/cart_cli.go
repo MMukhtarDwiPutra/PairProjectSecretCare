@@ -28,7 +28,7 @@ func (c *cli) AddCart() {
 	// Print the product list
 	fmt.Println("ID\tNama Produk\tHarga\tStock")
 	for _, product := range products {
-		fmt.Printf("%d\t%s\t%.2f\t%d\n", product.ID, product.Name, product.Price, product.Stock)
+		fmt.Printf("%d\t%s\t%.2f\t%d\n", product.ID, product.Nama, product.Harga, product.Stock)
 	}
 	
 	// masukan ID product
