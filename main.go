@@ -1,22 +1,23 @@
 package main
 
 import (
-	"SecretCare/cli"
-	"SecretCare/config"
-	"SecretCare/handler"
-	"context"
+    "SecretCare/cli"
+    "SecretCare/config"
+    "SecretCare/handler"
+    "context"
 )
 
 func main() {
+    // Replace with your Supabase connection string
+    connString := "postgresql://postgres.tsbsgibxzmhmjoaifosb:AnakGanteng@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 
-	db := config.InitDatabase("root:@tcp(127.0.0.1:3306)/SecretCare2")
-	defer db.Close()
+    db := config.InitDatabase(connString)
+    defer db.Close()
 
-	var ctx context.Context = context.Background()
-	
-	handler := handler.NewHandler(ctx, db)
-	cli := cli.NewCli(handler, ctx)
+    var ctx context.Context = context.Background()
 
+    handler := handler.NewHandler(ctx, db)
+    cli := cli.NewCli(handler, ctx)
 
-	cli.MenuUtama()
+    cli.MenuUtama()
 }

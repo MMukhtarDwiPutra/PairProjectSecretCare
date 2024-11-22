@@ -60,7 +60,7 @@ INSERT INTO toko(id, nama) VALUES
 INSERT INTO users(id, username, password, full_name, toko_id, role) VALUES
 (1, "mmukhtar", "$2a$14$VQC3HrTWFV1THTB67iaQ1OfbsDD1lzBxBpYmXKmpXxSvhz6/dVmkC", "Muhammad Mukhtar Dwi Putra", 2, 1),
 (2, "fathur", "$2a$14$TqS2QWIy3xxmbvJ9DFbLZOeeIpzTK5aRR45jrMkSfHEkDJ1t.VKCu", "Muhammad Mukhtar Dwi Putra", 3, 2),
-(3, "obiea", "$2a$14$1dzedAhWAUYtFyt/ylDDC.98xmvt6OELiZrQ4C3ovxLeZw58qPHa6", "Muhammad Mukhtar Dwi Putra", 1, 2);
+(3, "obie", "$2a$14$1dzedAhWAUYtFyt/ylDDC.98xmvt6OELiZrQ4C3ovxLeZw58qPHa6", "Muhammad Mukhtar Dwi Putra", 1, 2);
 
 INSERT INTO carts (status, user_id)
 VALUES 
