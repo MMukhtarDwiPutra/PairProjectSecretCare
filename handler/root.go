@@ -12,6 +12,7 @@ type Handler struct {
 	User    HandlerUser
 	Product HandlerProduct
 	Cart    HandlerCart
+	Order   HandlerOrder
 	ctx context.Context
 	db 	*sql.DB
 }
@@ -24,6 +25,7 @@ func NewHandler(ctx context.Context, db *sql.DB) *Handler {
 		User:    NewHandlerUser(ctx, db),
 		Product: NewHandlerProduct(ctx, db),
 		Cart:    NewHandlerCart(db),
+		Order:   NewHandlerOrder(db), // Add this line
 		ctx: ctx,
 		db: db,
 	}

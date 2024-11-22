@@ -344,6 +344,10 @@ func (c *cli) MenuPembeli() {
 				}
 			}	
 		case 3:
+			// Checkout functionality
+			user, _ := utils.GetUserFromContext(c.ctx)
+			
+			c.handler.Order.Checkout(user.ID)
 		case 4:
 		case 5:
 		case 6:
