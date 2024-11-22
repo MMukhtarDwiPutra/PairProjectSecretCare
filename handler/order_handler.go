@@ -14,7 +14,6 @@ type HandlerOrder interface {
 	UpdateCartStatus(userID int, status string) error
 	Checkout(userID int) error
 	GetAllOrderByTokoId(tokoID int) ([]entity.Order, error)
-	UpdateStatusOrder(id int, status string) error
 }
 
 type handlerOrder struct {
@@ -117,27 +116,4 @@ func (h *handlerOrder) GetAllOrderByTokoId(tokoID int) ([]entity.Order, error) {
 	}
 
 	return orders, nil
-}
-
-func (h *handlerOrder) UpdateStatusOrder(id int, status string) error {
-	query := `
-		UPDATE orders
-		SET status = $1
-		WHERE id = $2
-	`
-	result, err := h.db.ExecContext(h.ctx, query, status, id)
-	if err != nil {
-		return fmt.Errorf("failed to update orders: %w", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to retrieve rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("no rows were updated for orders.id: %d", id)
-	}
-
-	return nil
 }
