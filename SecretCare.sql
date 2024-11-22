@@ -46,7 +46,7 @@ CREATE TABLE cart_items(
 
 CREATE TABLE orders(
 	id INT PRIMARY KEY AUTO_INCREMENT,
-	status ENUM('Waiting For Payment', 'Checked Out') NOT NULL,
+	status ENUM('Shipped', 'Waiting For Payment', 'Checked Out') NOT NULL,
 	order_date DATE NOT NULL,
 	cart_id INT,
 	FOREIGN KEY (cart_id) REFERENCES carts(id)

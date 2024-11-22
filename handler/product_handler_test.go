@@ -299,6 +299,6 @@ package handler
 //     assert.Empty(t, result)
 
     // Verifikasi bahwa mock repository telah dipanggil dengan parameter yang benar
-    productMock.AssertCalled(t, "GetProductReport", 5)
-    productMock.AssertExpectations(t)
-}
+//     productMock.AssertCalled(t, "GetProductReport", 5)
+//     productMock.AssertExpectations(t)
+// }
