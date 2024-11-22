@@ -25,7 +25,7 @@ func NewHandler(ctx context.Context, db *sql.DB) *Handler {
 		User:    NewHandlerUser(ctx, db),
 		Product: NewHandlerProduct(ctx, db),
 		Cart:    NewHandlerCart(db),
-		Order:   NewHandlerOrder(db), // Add this line
+		Order:   NewHandlerOrder(db), 
 		ctx: ctx,
 		db: db,
 	}
