@@ -174,10 +174,15 @@ func (c *cli) MenuPembeli() {
 
 		switch inputMenu {
 		case 1:
+			c.AddCart()	
 		case 2:
+			c.ShowCart()	
 		case 3:
+			c.Checkout()
 		case 4:
+			c.DeleteCart()	
 		case 5:
+			c.UpdateCart()
 		case 6:
 			c.MenuAkun()
 		case 7:

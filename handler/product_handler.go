@@ -9,11 +9,17 @@ import(
 )
 
 type HandlerProduct interface{
-	CreateNewProduct(product entity.Product) (error)
+	CreateNewProduct(product entity.Product)
 	GetProductsByTokoID(tokoID int) []entity.Product
-	DeleteProductById(id int) error
-	UpdateStockById(id int, stock int) error
+	DeleteProductById(id int)
+	UpdateStockById(id int, stock int)
 	GetProductReport(tokoID int) []entity.ProductReport
+	GetAllProducts() ([]struct {
+		ID    int
+		Name  string
+		Price float64
+		Stock int
+	}, error)
 }
 
 type handlerProduct struct {
@@ -32,9 +38,9 @@ func (h *handlerProduct) CreateNewProduct(product entity.Product) (error){
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
-		return err
-	}
 
+		return err
+  }
 	fmt.Println("Produk berhasil ditambahkan!")
 
 	return nil
@@ -72,6 +78,7 @@ func (h *handlerProduct) GetProductsByTokoID(tokoID int) []entity.Product{
 	return products
 }
 
+
 func (h *handlerProduct) UpdateStockById(id int, stock int) (error) {
 	_, err := h.db.Exec("UPDATE products SET stock = ? WHERE id = ?", stock, id)
 
@@ -91,6 +98,7 @@ func (h *handlerProduct) DeleteProductById(id int) (error){
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
+
 		return err
 	}
 	fmt.Println("Product berhasil dihapus!")
@@ -139,4 +147,44 @@ func (h *handlerProduct) GetProductReport(tokoID int) []entity.ProductReport{
 	}
 
 	return productReports
+}
+
+func (h *handlerProduct) GetAllProducts() ([]struct {
+	ID    int
+	Name  string
+	Price float64
+	Stock int
+}, error) {
+	query := `
+		SELECT id, nama, harga, stock
+		FROM products
+	`
+	rows, err := h.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch products: %v", err)
+	}
+	defer rows.Close()
+
+	var products []struct {
+		ID    int
+		Name  string
+		Price float64
+		Stock int
+	}
+
+	for rows.Next() {
+		var product struct {
+			ID    int
+			Name  string
+			Price float64
+			Stock int
+		}
+		err := rows.Scan(&product.ID, &product.Name, &product.Price, &product.Stock)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan product row: %v", err)
+		}
+		products = append(products, product)
+	}
+
+	return products, nil
 }
