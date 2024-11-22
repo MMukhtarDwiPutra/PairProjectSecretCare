@@ -34,7 +34,7 @@ func NewHandlerAuth(ctx context.Context, db *sql.DB) HandlerAuth {
 func (h *handlerAuth) Login(username, password string) (bool, string, context.Context, error) {
 	user, err := h.handlerUser.GetUserByUsername(username)
 	if err != nil {
-		return false, "", h.ctx, fmt.Errorf("Error retrieving user:", err)
+		return false, "", h.ctx, err
 	}
 
 	successLogin := helpers.CheckPasswordHash(password, user.Password)

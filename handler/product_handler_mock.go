@@ -39,3 +39,10 @@ func (m *ProductMock) GetProductReport(tokoID int) []entity.ProductReport {
 	args := m.Called(tokoID)
 	return args.Get(0).([]entity.ProductReport)
 }
+
+// GetProductsByTokoID mocks the GetProductsByTokoID method
+func (m *ProductMock) GetAllProducts() ([]entity.Product, error) {
+    args := m.Called()
+    products, _ := args.Get(0).([]entity.Product)
+    return products, args.Error(1)
+}

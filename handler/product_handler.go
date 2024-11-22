@@ -14,12 +14,7 @@ type HandlerProduct interface{
 	DeleteProductById(id int) error
 	UpdateStockById(id int, stock int) error
 	GetProductReport(tokoID int) []entity.ProductReport
-	GetAllProducts() ([]struct {
-		ID    int
-		Name  string
-		Price float64
-		Stock int
-	}, error)
+	GetAllProducts() ([]entity.Product, error)
 }
 
 type handlerProduct struct {
@@ -147,12 +142,7 @@ func (h *handlerProduct) GetProductReport(tokoID int) []entity.ProductReport{
 	return productReports
 }
 
-func (h *handlerProduct) GetAllProducts() ([]struct {
-	ID    int
-	Name  string
-	Price float64
-	Stock int
-}, error) {
+func (h *handlerProduct) GetAllProducts() ([]entity.Product, error) {
 	query := `
 		SELECT id, nama, harga, stock
 		FROM products
@@ -163,21 +153,11 @@ func (h *handlerProduct) GetAllProducts() ([]struct {
 	}
 	defer rows.Close()
 
-	var products []struct {
-		ID    int
-		Name  string
-		Price float64
-		Stock int
-	}
+	var products []entity.Product
 
 	for rows.Next() {
-		var product struct {
-			ID    int
-			Name  string
-			Price float64
-			Stock int
-		}
-		err := rows.Scan(&product.ID, &product.Name, &product.Price, &product.Stock)
+		var product entity.Product
+		err := rows.Scan(&product.ID, &product.Nama, &product.Harga, &product.Stock)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan product row: %v", err)
 		}
