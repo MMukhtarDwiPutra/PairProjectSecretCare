@@ -25,7 +25,7 @@ func (h *handlerOrder) CreateNewOrder(cartID int) error {
 	// Insert a new order into the database
 	query := `
 		INSERT INTO orders (status, order_date, cart_id)
-		VALUES ('Sudah Dikirim', NOW(), ?)
+		VALUES ('Shipped', NOW(), ?)
 	`
 	_, err := h.db.ExecContext(h.ctx, query, cartID)
 	if err != nil {
@@ -60,6 +60,8 @@ func (h *handlerOrder) Checkout(userID int) error {
 	`
 	err := h.db.QueryRowContext(h.ctx, query, userID).Scan(&cartID)
 	if err != nil {
+		fmt.Println("the error from querying row context")
+
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("no active cart found for user ID %d", userID)
 		}
@@ -69,12 +71,14 @@ func (h *handlerOrder) Checkout(userID int) error {
 	// Create a new order
 	err = h.CreateNewOrder(cartID)
 	if err != nil {
+		fmt.Printf("Error creating order: %v\n", err) // Add logging
 		return fmt.Errorf("failed to create order: %v", err)
 	}
 
 	// Update the cart status to 'Checked_Out'
 	err = h.UpdateCartStatus(userID, "Checked Out")
 	if err != nil {
+		fmt.Println("the error from update cart status");
 		return fmt.Errorf("failed to update cart status: %v", err)
 	}
 
