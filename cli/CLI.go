@@ -10,8 +10,8 @@ import (
 	"context"
 	"fmt"
 	"os" //Diimpor untuk bisa scan multiple string dari layar cli di program golang
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type CLI interface {
@@ -41,7 +41,6 @@ func (c *cli) Login(inputReader *bufio.Reader) (bool, string) {
 	password = strings.TrimSpace(password)
 
 	successLogin, role, updatedCtx := c.handler.Auth.Login(username, password)
-
 
 	c.ctx = updatedCtx
 	return successLogin, role
@@ -121,42 +120,8 @@ func (c *cli) Register(inputReader *bufio.Reader) {
 	fmt.Println("")
 }
 
-func (c *cli) UpdateMyAccount() {
-	var username, password, fullName *string
 
-	userInput := helpers.InputAndHandlingText("Masukan username baru (atau tekan Enter untuk melewati): ")
-	if userInput != "" {
-		username = &userInput
-	}
-
-	passwordInput := helpers.InputAndHandlingText("Masukan password baru (atau tekan Enter untuk melewati): ")
-	if passwordInput != "" {
-		password = &passwordInput
-	}
-
-	fullNameInput := helpers.InputAndHandlingText("Masukan nama lengkap baru (atau tekan Enter untuk melewati): ")
-	if fullNameInput != "" {
-		fullName = &fullNameInput
-	}
-
-	ctx, err := c.handler.User.UpdateMyAccount(username, password, fullName)
-	c.ctx = ctx
-	if err != nil {
-		fmt.Printf("Gagal mengubah data akun: %v\n", err)
-		return
-	}
-
-	updatedUser, ok := utils.GetUserFromContext(c.ctx)
-	if !ok {
-		fmt.Println("Tidak dapat mengambil data akun yang diperbarui.")
-		return
-	}
-
-	fmt.Println("Data akun berhasil diubah.")
-	fmt.Printf("Informasi akun terbaru:\nUsername: %s\nNama Lengkap: %s\n", updatedUser.Username, updatedUser.FullName)
-}
-
-func (c *cli) MenuProductReport(){
+func (c *cli) MenuProductReport() {
 	user, _ := utils.GetUserFromContext(c.ctx)
 
 	fmt.Println("")
@@ -166,13 +131,13 @@ func (c *cli) MenuProductReport(){
 	fmt.Printf("%-25s %-10v %s\n", "Nama Produk", "Penjualan", "Pendapatan") // Header with fixed column widths
 
 	productReports := c.handler.Product.GetProductReport(user.TokoID)
-	
-	for _, productReport := range productReports{
+
+	for _, productReport := range productReports {
 		fmt.Printf("%-25s %-10v %.2f\n", productReport.Nama, productReport.TotalPenjualan, productReport.TotalPendapatan) // Header with fixed column widths
 	}
 }
 
-func (c *cli) MenuUpdateStock(){
+func (c *cli) MenuUpdateStock() {
 	user, _ := utils.GetUserFromContext(c.ctx)
 
 	products := c.handler.Product.GetProductsByTokoID(user.TokoID)
@@ -199,7 +164,7 @@ func (c *cli) MenuUpdateStock(){
 	c.handler.Product.UpdateStockById(produkID, stock)
 }
 
-func (c *cli) MenuDeleteProduct(){
+func (c *cli) MenuDeleteProduct() {
 	user, _ := utils.GetUserFromContext(c.ctx)
 
 	products := c.handler.Product.GetProductsByTokoID(user.TokoID)
@@ -209,12 +174,12 @@ func (c *cli) MenuDeleteProduct(){
 	fmt.Println("=============================")
 	fmt.Println("ID\t Nama Produk")
 
-	for _, product := range products{
-		fmt.Printf("%v\t %v\n",product.ID, product.Nama)
+	for _, product := range products {
+		fmt.Printf("%v\t %v\n", product.ID, product.Nama)
 	}
 	fmt.Println("0. Untuk kembali")
 	produkID := helpers.InputAndHandlingNumber("Masukan ID product yang ingin dihapus: ")
-	if(produkID == 0){
+	if produkID == 0 {
 		return
 	}
 
@@ -222,7 +187,7 @@ func (c *cli) MenuDeleteProduct(){
 	fmt.Println("Berhasil dihapus!")
 }
 
-func (c *cli) MenuCreateNewProduct(){
+func (c *cli) MenuCreateNewProduct() {
 	var product entity.Product
 	user, _ := utils.GetUserFromContext(c.ctx)
 
@@ -235,22 +200,22 @@ func (c *cli) MenuCreateNewProduct(){
 	// Input Username
 	fmt.Print("Masukan nama produk: ")
 	product.Nama, _ = inputReader.ReadString('\n')
-	product.Nama = strings.TrimSpace(product.Nama)	
+	product.Nama = strings.TrimSpace(product.Nama)
 
 	// Input Username
 	fmt.Print("Masukan harga: ")
 	hargaString, _ := inputReader.ReadString('\n')
 	hargaString = strings.TrimSpace(hargaString)
-	product.Harga, _ = strconv.ParseFloat(hargaString, 64);
+	product.Harga, _ = strconv.ParseFloat(hargaString, 64)
 
 	// Input Username
 	fmt.Print("Masukan stock: ")
 	stockString, _ := inputReader.ReadString('\n')
 	stockString = strings.TrimSpace(stockString)
-	product.Stock, _ = strconv.Atoi(stockString);
+	product.Stock, _ = strconv.Atoi(stockString)
 
 	product.TokoID = user.TokoID
-	c.handler.Product.CreateNewProduct(product);
+	c.handler.Product.CreateNewProduct(product)
 }
 
 func (c *cli) MenuPenjual() {
@@ -271,21 +236,21 @@ func (c *cli) MenuPenjual() {
 		fmt.Println("7. Logout")
 		inputMenu := helpers.InputAndHandlingNumber("Masukan nomor menu yang ingin dipilih: ")
 
-		switch inputMenu{
-			case 1:
-        		c.handler.User.ReportUserWithHighestSpending()
-			case 2:
-				c.MenuProductReport()
-			case 3:
-				c.MenuCreateNewProduct()
-			case 4:
-				c.MenuUpdateStock()
-			case 5:
-				c.MenuDeleteProduct()
-			case 6:
-				c.MenuAkun()
-			case 7:
-				selesaiMenu = true
+		switch inputMenu {
+		case 1:
+			c.ReportUserWithHighestSpending()
+		case 2:
+			c.MenuProductReport()
+		case 3:
+			c.MenuCreateNewProduct()
+		case 4:
+			c.MenuUpdateStock()
+		case 5:
+			c.MenuDeleteProduct()
+		case 6:
+			c.MenuAkun()
+		case 7:
+			selesaiMenu = true
 		}
 
 		fmt.Println()
@@ -446,7 +411,7 @@ func (c *cli) MenuPembeli() {
 		case 6:
 			c.MenuAkun()
 		case 7:
-			c.handler.User.ReportBuyerSpending()
+			c.ReportBuyerSpending()
 		case 8:
 			selesaiMenu = true
 		}
@@ -467,8 +432,8 @@ func (c *cli) MenuAkun() {
 
 		switch inputMenu {
 		case 1:
-			ctx, _ := c.handler.User.DeleteMyAccount()
-			c.ctx = ctx
+			c.DeleteMyAccount()
+			c.ctx = context.Background()
 			c.MenuUtama()
 		case 2:
 			c.UpdateMyAccount()

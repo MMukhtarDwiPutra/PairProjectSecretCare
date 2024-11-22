@@ -1,6 +1,8 @@
 -- Membuat database baru bernama SecretCare
 CREATE DATABASE SecretCare;
 
+USE SecretCare;
+
 CREATE TABLE toko(
 	id INT PRIMARY KEY AUTO_INCREMENT,
 	nama VARCHAR(256) NOT NULL
@@ -44,7 +46,7 @@ CREATE TABLE cart_items(
 
 CREATE TABLE orders(
 	id INT PRIMARY KEY AUTO_INCREMENT,
-	status VARCHAR(64) NOT NULL,
+	status ENUM('Waiting For Payment', 'Checked Out') NOT NULL,
 	order_date DATE NOT NULL,
 	cart_id INT,
 	FOREIGN KEY (cart_id) REFERENCES carts(id)
@@ -57,8 +59,14 @@ INSERT INTO toko(id, nama) VALUES
 
 INSERT INTO users(id, username, password, full_name, toko_id, role) VALUES
 (1, "mmukhtar", "$2a$14$VQC3HrTWFV1THTB67iaQ1OfbsDD1lzBxBpYmXKmpXxSvhz6/dVmkC", "Muhammad Mukhtar Dwi Putra", 2, 1),
-(2, "fathur", "$2a$14$TqS2QWIy3xxmbvJ9DFbLZOeeIpzTK5aRR45jrMkSfHEkDJ1t.VKCu", "Muhammad Mukhtar Dwi Putra", 3, 1),
+(2, "fathur", "$2a$14$TqS2QWIy3xxmbvJ9DFbLZOeeIpzTK5aRR45jrMkSfHEkDJ1t.VKCu", "Muhammad Mukhtar Dwi Putra", 3, 2),
 (3, "obiea", "$2a$14$1dzedAhWAUYtFyt/ylDDC.98xmvt6OELiZrQ4C3ovxLeZw58qPHa6", "Muhammad Mukhtar Dwi Putra", 1, 2);
+
+INSERT INTO carts (status, user_id)
+VALUES 
+    ('Active', 2),
+    ('Checked Out', 2),
+    ('Active', 2);
 
 INSERT INTO products(id, nama, harga, stock, toko_id) VALUES
 (1, "Pelembab Skintific Vit C", 50000, 23, 2),
@@ -79,3 +87,14 @@ INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `qty`, `price_at_purcha
 INSERT INTO `orders` (`id`, `status`, `order_date`, `cart_id`) VALUES
 (1, 'Sudah Dikirim', '2024-11-05', 1),
 (2, 'Belum dikirim', '2024-11-05', 2);
+
+INSERT INTO cart_items (cart_id, product_id, qty, price_at_purchase)
+VALUES 
+    (7, 1, 2, 10000),
+    (8, 2, 1, 15000),
+    (9, 3, 1, 20000);
+
+	INSERT INTO orders (status, order_date, cart_id)
+VALUES 
+    ('Waiting For Payment', '2024-11-01', 7),
+    ('Checked Out', '2024-11-15', 8);
