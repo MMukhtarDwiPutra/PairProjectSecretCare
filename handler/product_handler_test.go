@@ -298,7 +298,7 @@ package handler
 //     // Pastikan hasilnya adalah slice kosong (tidak ada produk ditemukan)
 //     assert.Empty(t, result)
 
-//     // Verifikasi bahwa mock repository telah dipanggil dengan parameter yang benar
-//     productMock.AssertCalled(t, "GetProductReport", 5)
-//     productMock.AssertExpectations(t)
-// }
+    // Verifikasi bahwa mock repository telah dipanggil dengan parameter yang benar
+    productMock.AssertCalled(t, "GetProductReport", 5)
+    productMock.AssertExpectations(t)
+}

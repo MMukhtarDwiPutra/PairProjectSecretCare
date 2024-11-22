@@ -32,16 +32,18 @@ func NewHandlerProduct(ctx context.Context, db *sql.DB) *handlerProduct {
 	return &handlerProduct{ctx, db}
 }
 
-func (h *handlerProduct) CreateNewProduct(product entity.Product){
+func (h *handlerProduct) CreateNewProduct(product entity.Product) (error){
 	// Insert into the database
 	_, err := h.db.Exec("INSERT INTO products (nama, harga, stock, toko_id) VALUES (?, ?, ?, ?)", product.Nama, product.Harga, product.Stock, product.TokoID)
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
-		return
-	}
 
+		return err
+  }
 	fmt.Println("Produk berhasil ditambahkan!")
+
+	return nil
 }
 
 func (h *handlerProduct) GetProductsByTokoID(tokoID int) []entity.Product{
@@ -76,26 +78,32 @@ func (h *handlerProduct) GetProductsByTokoID(tokoID int) []entity.Product{
 	return products
 }
 
-func (h *handlerProduct) UpdateStockById(id int, stock int){
+
+func (h *handlerProduct) UpdateStockById(id int, stock int) (error) {
 	_, err := h.db.Exec("UPDATE products SET stock = ? WHERE id = ?", stock, id)
 
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
-		return
+		return err
 	}
+
 	fmt.Println("Stock product berhasil diupdate!")
+	return nil
 }
 
-func (h *handlerProduct) DeleteProductById(id int){
+func (h *handlerProduct) DeleteProductById(id int) (error){
 	_, err := h.db.Exec("DELETE FROM products WHERE id = ?", id)
 
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
-		return
+
+		return err
 	}
 	fmt.Println("Product berhasil dihapus!")
+
+	return nil
 }
 
 func (h *handlerProduct) GetProductReport(tokoID int) []entity.ProductReport{
