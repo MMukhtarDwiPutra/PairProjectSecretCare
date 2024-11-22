@@ -9,10 +9,10 @@ import(
 )
 
 type HandlerProduct interface{
-	CreateNewProduct(product entity.Product)
+	CreateNewProduct(product entity.Product) (error)
 	GetProductsByTokoID(tokoID int) []entity.Product
-	DeleteProductById(id int)
-	UpdateStockById(id int, stock int)
+	DeleteProductById(id int) error
+	UpdateStockById(id int, stock int) error
 	GetProductReport(tokoID int) []entity.ProductReport
 	GetAllProducts() ([]struct {
 		ID    int
@@ -38,9 +38,9 @@ func (h *handlerProduct) CreateNewProduct(product entity.Product) (error){
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
-
 		return err
-  }
+	}
+
 	fmt.Println("Produk berhasil ditambahkan!")
 
 	return nil
@@ -78,7 +78,6 @@ func (h *handlerProduct) GetProductsByTokoID(tokoID int) []entity.Product{
 	return products
 }
 
-
 func (h *handlerProduct) UpdateStockById(id int, stock int) (error) {
 	_, err := h.db.Exec("UPDATE products SET stock = ? WHERE id = ?", stock, id)
 
@@ -98,7 +97,6 @@ func (h *handlerProduct) DeleteProductById(id int) (error){
 	if err != nil {
 		fmt.Println("Error executing query:", err)
 		fmt.Println()
-
 		return err
 	}
 	fmt.Println("Product berhasil dihapus!")
