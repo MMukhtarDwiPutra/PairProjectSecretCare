@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"context"
 )
 
 type HandlerCart interface {
@@ -23,19 +24,20 @@ type HandlerCart interface {
 }
 
 type handlerCart struct {
-	db *sql.DB
+	db  *sql.DB
+	ctx context.Context
 }
 
 // NewHandlerCart creates a new instance of HandlerCart
-func NewHandlerCart(db *sql.DB) HandlerCart {
-	return &handlerCart{db: db}
+func NewHandlerCart(ctx context.Context, db *sql.DB) HandlerCart {
+	return &handlerCart{db: db, ctx: ctx}
 }
 
 func (h *handlerCart) AddCart(userID int, productID int, qty int, priceAtPurchase float64) error {
 	// Check if there's an active cart for the user
 	var cartID int
 	query := "SELECT id FROM carts WHERE user_id = ? AND status = 'Active'"
-	err := h.db.QueryRow(query, userID).Scan(&cartID)
+	err := h.db.QueryRowContext(h.ctx, query, userID).Scan(&cartID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -62,7 +64,7 @@ func (h *handlerCart) AddCart(userID int, productID int, qty int, priceAtPurchas
 
 // CreateNewCart creates a new cart for the user and returns the cart ID
 func (h *handlerCart) CreateNewCart(userID int) (int, error) {
-	result, err := h.db.Exec("INSERT INTO carts (status, user_id) VALUES ('Active', ?)", userID)
+	result, err := h.db.ExecContext(h.ctx, "INSERT INTO carts (status, user_id) VALUES ('Active', ?)", userID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create cart: %v", err)
 	}
@@ -77,7 +79,7 @@ func (h *handlerCart) CreateNewCart(userID int) (int, error) {
 
 // CreateNewCartItems adds a new item to the cart
 func (h *handlerCart) CreateNewCartItems(cartID, productID, qty int, priceAtPurchase float64) error {
-	_, err := h.db.Exec("INSERT INTO cart_items (cart_id, product_id, qty, price_at_purchase) VALUES (?, ?, ?, ?)",
+	_, err := h.db.ExecContext(h.ctx, "INSERT INTO cart_items (cart_id, product_id, qty, price_at_purchase) VALUES (?, ?, ?, ?)",
 		cartID, productID, qty, priceAtPurchase)
 	if err != nil {
 		return fmt.Errorf("failed to add item to cart: %v", err)
@@ -98,7 +100,7 @@ func (h *handlerCart) ShowCart(userID int) ([]struct {
 		WHERE c.user_id = ?
 	`
 
-	rows, err := h.db.Query(query, userID)
+	rows, err := h.db.QueryContext(h.ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch cart data: %v", err)
 	}
@@ -136,7 +138,7 @@ func (h *handlerCart) DeleteAllCartItemsActive(userID int) error {
 		FROM carts
 		WHERE user_id = ? AND status = 'Active'
 	`
-	err := h.db.QueryRow(query, userID).Scan(&cartID)
+	err := h.db.QueryRowContext(h.ctx, query, userID).Scan(&cartID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("no active cart found for user ID %d", userID)
@@ -149,7 +151,7 @@ func (h *handlerCart) DeleteAllCartItemsActive(userID int) error {
 		DELETE FROM cart_items
 		WHERE cart_id = ?
 	`
-	_, err = h.db.Exec(deleteQuery, cartID)
+	_, err = h.db.ExecContext(h.ctx, deleteQuery, cartID)
 	if err != nil {
 		return fmt.Errorf("failed to delete cart items: %v", err)
 	}
@@ -162,7 +164,7 @@ func (h *handlerCart) DeleteCartItemByID(cartItemID int) error {
 		DELETE FROM cart_items
 		WHERE id = ?
 	`
-	_, err := h.db.Exec(query, cartItemID)
+	_, err := h.db.ExecContext(h.ctx, query, cartItemID)
 	if err != nil {
 		return fmt.Errorf("failed to delete cart item with ID %d: %v", cartItemID, err)
 	}
@@ -181,8 +183,10 @@ func (h *handlerCart) GetActiveCartItems(userID int) ([]struct {
 		JOIN products p ON ci.product_id = p.id
 		JOIN carts c ON ci.cart_id = c.id
 		WHERE c.user_id = ? AND c.status = 'Active'
-	`
-	rows, err := h.db.Query(query, userID)
+		`
+
+	rows, err := h.db.QueryContext(h.ctx, query, userID)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch cart items: %v", err)
 	}
@@ -221,7 +225,7 @@ func (h *handlerCart) UpdateQuantityCart(cartItemID int, newQuantity int) error 
 		SET qty = ?
 		WHERE id = ?
 	`
-	_, err := h.db.Exec(query, newQuantity, cartItemID)
+	_, err := h.db.ExecContext(h.ctx, query, newQuantity, cartItemID)
 	if err != nil {
 		return fmt.Errorf("failed to update cart item quantity: %v", err)
 	}

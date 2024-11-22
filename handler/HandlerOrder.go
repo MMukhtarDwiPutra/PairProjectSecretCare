@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"context"
 )
 
 type HandlerOrder interface {
@@ -12,11 +13,12 @@ type HandlerOrder interface {
 }
 
 type handlerOrder struct {
-	db *sql.DB
+	db  *sql.DB
+	ctx context.Context
 }
 
-func NewHandlerOrder(db *sql.DB) HandlerOrder {
-	return &handlerOrder{db: db}
+func NewHandlerOrder(ctx context.Context, db *sql.DB) HandlerOrder {
+	return &handlerOrder{db: db, ctx: ctx}
 }
 
 func (h *handlerOrder) CreateNewOrder(cartID int) error {
@@ -25,7 +27,7 @@ func (h *handlerOrder) CreateNewOrder(cartID int) error {
 		INSERT INTO orders (status, order_date, cart_id)
 		VALUES ('Sudah Dikirim', NOW(), ?)
 	`
-	_, err := h.db.Exec(query, cartID)
+	_, err := h.db.ExecContext(h.ctx, query, cartID)
 	if err != nil {
 		return fmt.Errorf("failed to create new order: %v", err)
 	}
@@ -40,7 +42,7 @@ func (h *handlerOrder) UpdateCartStatus(userID int, status string) error {
 		SET status = ?
 		WHERE user_id = ?
 	`
-	_, err := h.db.Exec(query, status, userID)
+	_, err := h.db.ExecContext(h.ctx, query, status, userID)
 	if err != nil {
 		return fmt.Errorf("failed to update cart status: %v", err)
 	}
@@ -56,7 +58,7 @@ func (h *handlerOrder) Checkout(userID int) error {
 		FROM carts
 		WHERE user_id = ? AND status = 'Active'
 	`
-	err := h.db.QueryRow(query, userID).Scan(&cartID)
+	err := h.db.QueryRowContext(h.ctx, query, userID).Scan(&cartID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("no active cart found for user ID %d", userID)
