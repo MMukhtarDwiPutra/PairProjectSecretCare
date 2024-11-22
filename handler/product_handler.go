@@ -103,8 +103,8 @@ func (h *handlerProduct) GetProductReport(tokoID int) []entity.ProductReport{
 	var productReports []entity.ProductReport
 	rows, err := h.db.Query(`SELECT 
 							    products.nama, 
-							    COALESCE(SUM(CASE WHEN orders.status = "Sudah dikirim" THEN cart_items.qty ELSE 0 END), 0) AS total_penjualan,
-							    COALESCE(SUM(CASE WHEN orders.status = "Sudah dikirim" THEN cart_items.price_at_purchase ELSE 0 END), 0) AS total_pendapatan
+							    COALESCE(SUM(CASE WHEN orders.status = "Checked Out" THEN cart_items.qty ELSE 0 END), 0) AS total_penjualan,
+							    COALESCE(SUM(CASE WHEN orders.status = "Checked Out" THEN cart_items.price_at_purchase ELSE 0 END), 0) AS total_pendapatan
 							FROM 
 							    products
 							LEFT JOIN 
